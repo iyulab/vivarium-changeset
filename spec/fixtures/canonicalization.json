@@ -1,0 +1,55 @@
+[
+  {
+    "name": "numbers",
+    "input": {
+      "a": 4.5,
+      "b": 1e+30,
+      "c": 0.002,
+      "d": 10,
+      "e": 0
+    },
+    "canonical": "{\"a\":4.5,\"b\":1e+30,\"c\":0.002,\"d\":10,\"e\":0}"
+  },
+  {
+    "name": "key-sort-ascii",
+    "input": {
+      "0": 3,
+      "b": 1,
+      "a": 2,
+      "A": 4
+    },
+    "canonical": "{\"0\":3,\"A\":4,\"a\":2,\"b\":1}"
+  },
+  {
+    "name": "key-sort-non-ascii",
+    "input": {
+      "é": 1,
+      "z": 2,
+      "à": 3
+    },
+    "canonical": "{\"z\":2,\"à\":3,\"é\":1}"
+  },
+  {
+    "name": "nested",
+    "input": {
+      "outer": {
+        "b": [
+          true,
+          null,
+          "x"
+        ],
+        "a": {
+          "deep": []
+        }
+      }
+    },
+    "canonical": "{\"outer\":{\"a\":{\"deep\":[]},\"b\":[true,null,\"x\"]}}"
+  },
+  {
+    "name": "string-escapes",
+    "input": {
+      "s": "line\nbreak \"quoted\" \\ € \u0007"
+    },
+    "canonical": "{\"s\":\"line\\nbreak \\\"quoted\\\" \\\\ € \\u0007\"}"
+  }
+]

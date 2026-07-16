@@ -1,0 +1,37 @@
+[
+  {
+    "name": "minimal-schema-change",
+    "document": {
+      "specVersion": "0.1.0-draft",
+      "intent": "Add a due-date to the loan screen",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-16T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "default",
+            "fingerprint": "sha256:abababababababababababababababababababababababababababababababab"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "field.add",
+            "entity": "loan",
+            "field": {
+              "name": "dueDate",
+              "type": "date",
+              "required": false
+            },
+            "explanation": "Stores the loan's due date"
+          }
+        ],
+        "ui": [],
+        "data": []
+      }
+    },
+    "fingerprint": "sha256:dac5d8fc0ac3b2372303b7b2594140b8b60d0028dabf2be28eed22ed9866af74"
+  }
+]

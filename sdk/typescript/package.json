@@ -1,0 +1,14 @@
+{
+  "name": "@vivarium/changeset",
+  "version": "0.1.0",
+  "description": "Reference TypeScript SDK for the Vivarium Changeset specification — construct, canonicalize, fingerprint, and validate changesets. No apply logic.",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": { "node": ">=23.6" },
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "test": "node --test \"src/*.test.ts\"",
+    "generate-fixtures": "node tools/generate-fixtures.ts"
+  }
+}
