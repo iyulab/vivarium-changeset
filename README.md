@@ -52,13 +52,19 @@ A changeset also carries provenance (who/what produced it, from which base state
 4. **Machine-first, human-legible.** Agents are the primary authors and readers, but a human reviewer must be able to read a changeset and understand what will happen — every change carries an explanation slot.
 5. **Zero dependencies, in both directions.** This repo depends on nothing in the family; everything in the family may depend on it. It is the one edge every arrow points at.
 
-## Deliberately undecided
+## Decided so far / deliberately undecided
 
-- Serialization (JSON, YAML, or multiple encodings over one model)
-- Granularity of UI patches (whole-artifact replacement vs. fine-grained edits)
-- How schema patches map onto specific backends (MorphDB operations, SQL, etc. — adapter concern)
-- Signing/attestation beyond content fingerprints
-- Additional SDK languages
+Decided (2026-07, see [`spec/README.md`](spec/README.md) for the summary): single JSON
+serialization (I-JSON); fingerprint = SHA-256 over RFC 8785 canonical form;
+ApprovalRecord + gate semantics; UI patch reviewability invariant with a whole-artifact
+v0 profile; backend-neutral logical schema operations (mapping is an adapter concern).
+Working draft: [`spec/SPEC.md`](spec/SPEC.md).
+
+Still deliberately undecided:
+
+- Signing/attestation beyond content fingerprints (extension slot reserved)
+- Data transformation expressions (v0 is literal-values only)
+- Additional SDK languages beyond .NET and TypeScript
 
 ## Relationship to the Vivarium family
 
