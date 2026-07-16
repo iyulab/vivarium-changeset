@@ -5,7 +5,9 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { canonicalize } from "../src/canonicalize.ts";
+import { createUnifiedDiff } from "../src/diff.ts";
 import { fingerprintOf, stampFingerprint } from "../src/fingerprint.ts";
 
 const outDir = fileURLToPath(new URL("../../../spec/fixtures/", import.meta.url));
@@ -81,5 +83,55 @@ write("gate-tampered-content.json", {
     ],
   },
 });
+
+// --- validation cases (full document incl. UI + data facets) ---
+const baseContent = "export function LoanScreen() {\n  return <Form fields={[amount]} />;\n}";
+const newContent = "export function LoanScreen() {\n  return <Form fields={[amount, dueDate]} />;\n}";
+const artifactSha = (s: string) => "sha256:" + createHash("sha256").update(s, "utf8").digest("hex");
+const fullDoc = {
+  specVersion: "0.1.0-draft",
+  intent: "Add a due-date to the loan screen",
+  provenance: {
+    producedBy: "fixture-generator",
+    createdAt: "2026-07-16T00:00:00Z",
+    baseState: [{ kind: "ui-artifact", ref: "screen-loans", fingerprint: artifactSha(baseContent) }],
+  },
+  patches: {
+    schema: [
+      {
+        op: "field.add",
+        entity: "loan",
+        field: { name: "dueDate", type: "date", required: false },
+        explanation: "Stores the loan's due date",
+      },
+    ],
+    ui: [
+      {
+        profile: "whole-artifact@0",
+        artifactId: "screen-loans",
+        baseFingerprint: artifactSha(baseContent),
+        newContent,
+        reviewDiff: createUnifiedDiff(baseContent, newContent),
+        explanation: "Renders the due-date field on the loan form",
+      },
+    ],
+    data: [
+      {
+        id: "backfill-due-dates",
+        explanation: "Seed a default due date for existing loans",
+        operations: [{ op: "update", entity: "loan", where: { field: "dueDate", equals: null }, set: { dueDate: "2026-08-01" } }],
+      },
+    ],
+  },
+};
+const inconsistentDiff = structuredClone(fullDoc);
+inconsistentDiff.patches.ui[0].baseFingerprint = artifactSha("a different base the reviewer never saw");
+const unknownMember = { ...structuredClone(fullDoc), vendorExtra: true } as Record<string, unknown>;
+
+write("validation.json", [
+  { name: "full-document-valid", expect: "valid", document: stampFingerprint(fullDoc) },
+  { name: "inconsistent-review-diff", expect: "invalid", document: inconsistentDiff },
+  { name: "unknown-top-level-member", expect: "invalid", document: unknownMember },
+]);
 
 console.log("fixtures written to", outDir);

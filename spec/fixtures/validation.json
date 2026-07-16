@@ -1,0 +1,190 @@
+[
+  {
+    "name": "full-document-valid",
+    "expect": "valid",
+    "document": {
+      "specVersion": "0.1.0-draft",
+      "intent": "Add a due-date to the loan screen",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-16T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:12defcf629671ba170f7498c620ca2c1a20d20dc860aed308d7d0fcca6979067"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "field.add",
+            "entity": "loan",
+            "field": {
+              "name": "dueDate",
+              "type": "date",
+              "required": false
+            },
+            "explanation": "Stores the loan's due date"
+          }
+        ],
+        "ui": [
+          {
+            "profile": "whole-artifact@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": "sha256:12defcf629671ba170f7498c620ca2c1a20d20dc860aed308d7d0fcca6979067",
+            "newContent": "export function LoanScreen() {\n  return <Form fields={[amount, dueDate]} />;\n}",
+            "reviewDiff": "@@ -1,3 +1,3 @@\n export function LoanScreen() {\n-  return <Form fields={[amount]} />;\n+  return <Form fields={[amount, dueDate]} />;\n }\n",
+            "explanation": "Renders the due-date field on the loan form"
+          }
+        ],
+        "data": [
+          {
+            "id": "backfill-due-dates",
+            "explanation": "Seed a default due date for existing loans",
+            "operations": [
+              {
+                "op": "update",
+                "entity": "loan",
+                "where": {
+                  "field": "dueDate",
+                  "equals": null
+                },
+                "set": {
+                  "dueDate": "2026-08-01"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "fingerprint": "sha256:96fe30566bab812e6bf8d7c77e7826940c19f02902355de4016f6c00b7a05655"
+    }
+  },
+  {
+    "name": "inconsistent-review-diff",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.1.0-draft",
+      "intent": "Add a due-date to the loan screen",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-16T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:12defcf629671ba170f7498c620ca2c1a20d20dc860aed308d7d0fcca6979067"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "field.add",
+            "entity": "loan",
+            "field": {
+              "name": "dueDate",
+              "type": "date",
+              "required": false
+            },
+            "explanation": "Stores the loan's due date"
+          }
+        ],
+        "ui": [
+          {
+            "profile": "whole-artifact@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": "sha256:5e0b34abd488a3bbc30be0f1e15871069acc8b0d3dfe41cc97e3554c9019374f",
+            "newContent": "export function LoanScreen() {\n  return <Form fields={[amount, dueDate]} />;\n}",
+            "reviewDiff": "@@ -1,3 +1,3 @@\n export function LoanScreen() {\n-  return <Form fields={[amount]} />;\n+  return <Form fields={[amount, dueDate]} />;\n }\n",
+            "explanation": "Renders the due-date field on the loan form"
+          }
+        ],
+        "data": [
+          {
+            "id": "backfill-due-dates",
+            "explanation": "Seed a default due date for existing loans",
+            "operations": [
+              {
+                "op": "update",
+                "entity": "loan",
+                "where": {
+                  "field": "dueDate",
+                  "equals": null
+                },
+                "set": {
+                  "dueDate": "2026-08-01"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "unknown-top-level-member",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.1.0-draft",
+      "intent": "Add a due-date to the loan screen",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-16T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:12defcf629671ba170f7498c620ca2c1a20d20dc860aed308d7d0fcca6979067"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "field.add",
+            "entity": "loan",
+            "field": {
+              "name": "dueDate",
+              "type": "date",
+              "required": false
+            },
+            "explanation": "Stores the loan's due date"
+          }
+        ],
+        "ui": [
+          {
+            "profile": "whole-artifact@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": "sha256:12defcf629671ba170f7498c620ca2c1a20d20dc860aed308d7d0fcca6979067",
+            "newContent": "export function LoanScreen() {\n  return <Form fields={[amount, dueDate]} />;\n}",
+            "reviewDiff": "@@ -1,3 +1,3 @@\n export function LoanScreen() {\n-  return <Form fields={[amount]} />;\n+  return <Form fields={[amount, dueDate]} />;\n }\n",
+            "explanation": "Renders the due-date field on the loan form"
+          }
+        ],
+        "data": [
+          {
+            "id": "backfill-due-dates",
+            "explanation": "Seed a default due date for existing loans",
+            "operations": [
+              {
+                "op": "update",
+                "entity": "loan",
+                "where": {
+                  "field": "dueDate",
+                  "equals": null
+                },
+                "set": {
+                  "dueDate": "2026-08-01"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "vendorExtra": true
+    }
+  }
+]

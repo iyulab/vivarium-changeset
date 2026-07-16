@@ -113,8 +113,12 @@ structural edits) may be added in later minors; all must satisfy the invariant.
 }
 ```
 
-Validators MUST verify `reviewDiff` reconstructs `newContent` from the base content
-(creation: from empty). An inconsistent diff is a validation failure.
+**Diff verification (self-contained — no artifact store required):** validators MUST
+reverse-apply `reviewDiff` to `newContent`, recovering the base content, and verify that
+the recovered base's artifact fingerprint equals `baseFingerprint` (creation: the
+recovered base MUST be empty and `baseFingerprint` MUST be `null`). An inconsistent diff
+is a validation failure — a diff the reviewer read that doesn't match what will land is
+precisely what the fingerprint gate exists to stop.
 
 ### 5.3 Data patches
 

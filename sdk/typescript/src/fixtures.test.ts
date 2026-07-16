@@ -30,3 +30,10 @@ test("gate fixture: tampered-content must refuse", () => {
   const { document } = load("gate-tampered-content.json");
   assert.equal(verifyFingerprint(document), false);
 });
+
+test("validation fixtures reproduce", async () => {
+  const { validate } = await import("./validate.ts");
+  for (const { name, expect, document } of load("validation.json")) {
+    assert.equal(validate(document).valid, expect === "valid", `case: ${name}`);
+  }
+});
