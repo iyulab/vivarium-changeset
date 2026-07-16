@@ -1,6 +1,6 @@
 # Vivarium Changeset Specification
 
-**Version: 0.1.0-draft** · Status: working draft — normative once tagged 0.1.0.
+**Version: 0.1.0** · Status: normative (tagged 2026-07-16).
 
 The key words MUST, MUST NOT, SHOULD, MAY are to be interpreted as in RFC 2119.
 
@@ -24,7 +24,7 @@ MUST be rejected by validators (closed model in v0 — forward compatibility is 
 
 ```json
 {
-  "specVersion": "0.1.0-draft",
+  "specVersion": "0.1.0",
   "id": "optional-producer-assigned-string",
   "intent": "Add a due-date to the loan screen",
   "provenance": { ... },        // §4

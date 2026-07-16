@@ -35,7 +35,7 @@ write(
 
 // --- fingerprint vectors ---
 const minimal = {
-  specVersion: "0.1.0-draft",
+  specVersion: "0.1.0",
   intent: "Add a due-date to the loan screen",
   provenance: {
     producedBy: "fixture-generator",
@@ -89,7 +89,7 @@ const baseContent = "export function LoanScreen() {\n  return <Form fields={[amo
 const newContent = "export function LoanScreen() {\n  return <Form fields={[amount, dueDate]} />;\n}";
 const artifactSha = (s: string) => "sha256:" + createHash("sha256").update(s, "utf8").digest("hex");
 const fullDoc = {
-  specVersion: "0.1.0-draft",
+  specVersion: "0.1.0",
   intent: "Add a due-date to the loan screen",
   provenance: {
     producedBy: "fixture-generator",

@@ -5,7 +5,7 @@ import { FINGERPRINT_PREFIX, fingerprintOf } from "./fingerprint.ts";
 export interface ValidationError { path: string; message: string }
 export interface ValidationResult { valid: boolean; errors: ValidationError[] }
 
-export const SUPPORTED_SPEC_VERSIONS = ["0.1.0-draft"];
+export const SUPPORTED_SPEC_VERSIONS = ["0.1.0"];
 
 const SCHEMA_OPS: Record<string, string[]> = {
   "entity.create": ["op", "entity", "fields", "explanation"],
@@ -24,7 +24,7 @@ const DATA_OPS = ["insert", "update", "delete"];
 const artifactFingerprint = (content: string): string =>
   FINGERPRINT_PREFIX + createHash("sha256").update(content, "utf8").digest("hex");
 
-/** Validate a parsed changeset document against spec §8 (0.1.0-draft). */
+/** Validate a parsed changeset document against spec §8 (0.1.0). */
 export function validate(document: unknown): ValidationResult {
   const errors: ValidationError[] = [];
   const err = (path: string, message: string) => errors.push({ path, message });

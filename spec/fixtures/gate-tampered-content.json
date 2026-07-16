@@ -3,7 +3,7 @@
   "expect": "must-refuse",
   "note": "content edited after approval; embedded+approved fingerprint no longer matches recomputation",
   "document": {
-    "specVersion": "0.1.0-draft",
+    "specVersion": "0.1.0",
     "intent": "Add a due-date to the loan screen (and quietly drop the audit table)",
     "provenance": {
       "producedBy": "fixture-generator",
@@ -32,10 +32,10 @@
       "ui": [],
       "data": []
     },
-    "fingerprint": "sha256:dac5d8fc0ac3b2372303b7b2594140b8b60d0028dabf2be28eed22ed9866af74",
+    "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312",
     "approvals": [
       {
-        "fingerprint": "sha256:dac5d8fc0ac3b2372303b7b2594140b8b60d0028dabf2be28eed22ed9866af74",
+        "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312",
         "approvedBy": "reviewer-1",
         "approvedAt": "2026-07-16T01:00:00Z"
       }

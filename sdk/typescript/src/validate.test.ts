@@ -10,7 +10,7 @@ const newContent = "export function Screen() {\n  return <Form dueDate />;\n}";
 const sha = (s: string) => "sha256:" + createHash("sha256").update(s, "utf8").digest("hex");
 
 const validDoc = () => ({
-  specVersion: "0.1.0-draft",
+  specVersion: "0.1.0",
   intent: "Add a due-date to the loan screen",
   provenance: { producedBy: "test", createdAt: "2026-07-16T00:00:00Z", baseState: [] },
   patches: {

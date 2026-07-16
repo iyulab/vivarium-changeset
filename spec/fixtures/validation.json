@@ -3,7 +3,7 @@
     "name": "full-document-valid",
     "expect": "valid",
     "document": {
-      "specVersion": "0.1.0-draft",
+      "specVersion": "0.1.0",
       "intent": "Add a due-date to the loan screen",
       "provenance": {
         "producedBy": "fixture-generator",
@@ -59,14 +59,14 @@
           }
         ]
       },
-      "fingerprint": "sha256:96fe30566bab812e6bf8d7c77e7826940c19f02902355de4016f6c00b7a05655"
+      "fingerprint": "sha256:3902483af39883f0c37a75e14ef697941b9facfeef95049e1d9354b450b4dff0"
     }
   },
   {
     "name": "inconsistent-review-diff",
     "expect": "invalid",
     "document": {
-      "specVersion": "0.1.0-draft",
+      "specVersion": "0.1.0",
       "intent": "Add a due-date to the loan screen",
       "provenance": {
         "producedBy": "fixture-generator",
@@ -128,7 +128,7 @@
     "name": "unknown-top-level-member",
     "expect": "invalid",
     "document": {
-      "specVersion": "0.1.0-draft",
+      "specVersion": "0.1.0",
       "intent": "Add a due-date to the loan screen",
       "provenance": {
         "producedBy": "fixture-generator",

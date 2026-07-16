@@ -2,7 +2,7 @@
 
 The spec is the product; SDKs implement it, never the reverse.
 
-- [`SPEC.md`](SPEC.md) — the normative specification (0.1.0-draft).
+- [`SPEC.md`](SPEC.md) — the normative specification (0.1.0).
 - `fixtures/` — conformance corpus any independent implementation validates against.
 
 ## Design decisions (summary)

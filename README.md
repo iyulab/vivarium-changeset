@@ -2,7 +2,7 @@
 
 > A versioned, fingerprinted contract for describing application change — schema, UI, and seed data as one reviewable, appliable unit.
 
-**Status: design phase (pre-0.1).** This is a *specification-first* repository: the spec is the product, the SDKs are its reference companions. This document fixes purpose, scope, and non-negotiable properties of the format; the format's concrete shape is developed in `spec/` through ADRs.
+**Status: specification 0.1.0.** This is a *specification-first* repository: the spec is the product, the SDKs are its reference companions. The normative format lives in [`spec/SPEC.md`](spec/SPEC.md); the TypeScript reference SDK is available under [`sdk/typescript/`](sdk/typescript/) (a .NET SDK is planned).
 
 ---
 

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { fingerprintOf, stampFingerprint, verifyFingerprint } from "./fingerprint.ts";
 
 const doc = () => ({
-  specVersion: "0.1.0-draft",
+  specVersion: "0.1.0",
   intent: "test changeset",
   provenance: { producedBy: "test", createdAt: "2026-07-16T00:00:00Z", baseState: [] },
   patches: { schema: [], ui: [], data: [{ id: "seed", explanation: "seed", operations: [] }] },
