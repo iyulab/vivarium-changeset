@@ -33,14 +33,14 @@ Conceptually, a changeset bundles three kinds of patch under one version and one
 | Facet | Describes | Lineage |
 | --- | --- | --- |
 | **Schema patch** | Structural change to the data model | generalizes the reviewed-plan model proven in [Schemorph](https://github.com/iyulab/Schemorph) |
-| **UI patch** | Change to screens/components | targets sandbox-runnable UI such as [Vivarium](../vivarium) output |
+| **UI patch** | Change to screens/components | targets sandbox-runnable UI such as [Vivarium](https://github.com/iyulab/vivarium) output |
 | **Data patch** | Seeds, backfills, one-off transformations | versioned, run-once, checksummed |
 
 A changeset also carries provenance (who/what produced it, from which base state) so that "apply" can refuse when the world has drifted since review.
 
 ## What this repository is not
 
-- **Not an engine.** Nothing in this repo connects to a database, renders UI, or applies anything. Apply semantics are specified here; apply *execution* lives in consumers such as [`vivarium-stage`](../vivarium-stage).
+- **Not an engine.** Nothing in this repo connects to a database, renders UI, or applies anything. Apply semantics are specified here; apply *execution* lives in consumers such as [`vivarium-stage`](https://github.com/iyulab/vivarium-stage).
 - **Not tied to any producer or consumer.** Agents produce changesets; humans can too. Stage applies them; other engines may as well. The contract must outlive any single implementation on either side.
 - **Not a general-purpose diff format.** It describes application change in the Vivarium sense — schema + UI + data — nothing broader.
 
@@ -62,7 +62,7 @@ A changeset also carries provenance (who/what produced it, from which base state
 
 ## Relationship to the Vivarium family
 
-`vivarium-changeset` is the family's dependency root. [`vivarium-agent`](../vivarium-agent) emits changesets; [`vivarium-stage`](../vivarium-stage) previews and applies them; [`vivarium`](../vivarium) exchanges UI patches through them. Horizontal dependencies between the other repos are forbidden — if two of them need to talk, the vocabulary they use is defined here.
+`vivarium-changeset` is the family's dependency root. [`vivarium-agent`](https://github.com/iyulab/vivarium-agent) emits changesets; [`vivarium-stage`](https://github.com/iyulab/vivarium-stage) previews and applies them; [`vivarium`](https://github.com/iyulab/vivarium) exchanges UI patches through them. Horizontal dependencies between the other repos are forbidden — if two of them need to talk, the vocabulary they use is defined here.
 
 Standalone use is a first-class scenario: any system that wants "reviewable, fingerprint-gated application change" can adopt the format without adopting anything else from the family.
 
