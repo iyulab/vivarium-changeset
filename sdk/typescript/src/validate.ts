@@ -66,25 +66,42 @@ export function validate(document: unknown): ValidationResult {
     return { valid: errors.length === 0, errors };
   }
   checkMembers(patches, ["schema", "ui", "data"], "$.patches");
-  const schema = (patches.schema ?? []) as Record<string, unknown>[];
-  const ui = (patches.ui ?? []) as Record<string, unknown>[];
-  const data = (patches.data ?? []) as Record<string, unknown>[];
+  // a non-array facet is a validation error, not a crash — the validator's
+  // contract is to return errors for any JSON input
+  const facet = (name: string): Record<string, unknown>[] => {
+    const value = patches[name];
+    if (value === undefined) return [];
+    if (Array.isArray(value)) return value as Record<string, unknown>[];
+    err(`$.patches.${name}`, "must be an array");
+    return [];
+  };
+  const schema = facet("schema");
+  const ui = facet("ui");
+  const data = facet("data");
   if (schema.length + ui.length + data.length === 0) {
     err("$.patches", "at least one facet must be non-empty (spec §3)");
   }
 
+  const isRecord = (v: unknown): v is Record<string, unknown> =>
+    typeof v === "object" && v !== null && !Array.isArray(v);
+
   schema.forEach((p, i) => {
     const path = `$.patches.schema[${i}]`;
+    if (!isRecord(p)) { err(path, "must be an object"); return; }
     const allowed = SCHEMA_OPS[p.op as string];
     if (!allowed) { err(`${path}.op`, `unknown schema operation: ${String(p.op)}`); return; }
     checkMembers(p, allowed, path);
     for (const req of allowed) if (!(req in p)) err(`${path}.${req}`, "required member missing");
     if (typeof p.explanation !== "string" || p.explanation === "") err(`${path}.explanation`, "explanation required");
-    const fields = p.op === "entity.create" ? (p.fields as Record<string, unknown>[]) ?? [] :
-      p.op === "field.add" && p.field ? [p.field as Record<string, unknown>] : [];
+    if (p.op === "entity.create" && !Array.isArray(p.fields)) err(`${path}.fields`, "must be an array");
+    const fields = p.op === "entity.create" && Array.isArray(p.fields) ? (p.fields as unknown[]) :
+      p.op === "field.add" && p.field ? [p.field] : [];
     for (const f of fields) {
-      if (!LOGICAL_TYPES.includes(f.type as string)) err(`${path}`, `unknown logical type: ${String(f.type)}`);
-      if (f.type === "reference" && typeof f.target !== "string") err(`${path}`, "reference type requires target");
+      const ftype = isRecord(f) ? f.type : undefined;
+      if (!LOGICAL_TYPES.includes(ftype as string)) err(`${path}`, `unknown logical type: ${String(ftype)}`);
+      else if (ftype === "reference" && typeof (f as Record<string, unknown>).target !== "string") {
+        err(`${path}`, "reference type requires target");
+      }
     }
     if (p.op === "field.retype" && !LOGICAL_TYPES.includes(p.newType as string)) {
       err(`${path}.newType`, `unknown logical type: ${String(p.newType)}`);
@@ -93,6 +110,7 @@ export function validate(document: unknown): ValidationResult {
 
   ui.forEach((p, i) => {
     const path = `$.patches.ui[${i}]`;
+    if (!isRecord(p)) { err(path, "must be an object"); return; }
     checkMembers(p, ["profile", "artifactId", "baseFingerprint", "newContent", "reviewDiff", "explanation"], path);
     if (p.profile !== "whole-artifact@0") { err(`${path}.profile`, `unknown UI patch profile: ${String(p.profile)}`); return; }
     if (typeof p.artifactId !== "string") err(`${path}.artifactId`, "required string");
@@ -120,14 +138,16 @@ export function validate(document: unknown): ValidationResult {
   const seen = new Set<string>();
   data.forEach((p, i) => {
     const path = `$.patches.data[${i}]`;
+    if (!isRecord(p)) { err(path, "must be an object"); return; }
     checkMembers(p, ["id", "explanation", "operations"], path);
     if (typeof p.id !== "string" || p.id === "") err(`${path}.id`, "required string");
     else if (seen.has(p.id)) err(`${path}.id`, `duplicate data patch id: ${p.id}`);
     else seen.add(p.id);
     if (typeof p.explanation !== "string" || p.explanation === "") err(`${path}.explanation`, "explanation required");
     if (!Array.isArray(p.operations)) err(`${path}.operations`, "required array");
-    else (p.operations as Record<string, unknown>[]).forEach((op, j) => {
-      if (!DATA_OPS.includes(op.op as string)) err(`${path}.operations[${j}].op`, `unknown data operation: ${String(op.op)}`);
+    else (p.operations as unknown[]).forEach((op, j) => {
+      const dop = isRecord(op) ? op.op : undefined;
+      if (!DATA_OPS.includes(dop as string)) err(`${path}.operations[${j}].op`, `unknown data operation: ${String(dop)}`);
     });
   });
 
@@ -143,7 +163,8 @@ export function validate(document: unknown): ValidationResult {
   // approvals, if present
   if (doc.approvals !== undefined) {
     if (!Array.isArray(doc.approvals)) err("$.approvals", "must be an array");
-    else (doc.approvals as Record<string, unknown>[]).forEach((a, i) => {
+    else (doc.approvals as unknown[]).forEach((a, i) => {
+      if (!isRecord(a)) { err(`$.approvals[${i}]`, "must be an object"); return; }
       checkMembers(a, ["fingerprint", "approvedBy", "approvedAt", "comment", "attestation"], `$.approvals[${i}]`);
       if (typeof a.fingerprint !== "string") err(`$.approvals[${i}].fingerprint`, "required string");
       if (typeof a.approvedBy !== "string") err(`$.approvals[${i}].approvedBy`, "required string");

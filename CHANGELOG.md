@@ -7,7 +7,25 @@ are pre-1.0.
 
 ## [Unreleased]
 
+### Added
+- **.NET reference SDK** (`sdk/dotnet`, `Vivarium.Changeset`, net10.0):
+  same surface as the TypeScript SDK — JCS canonicalization (ECMAScript
+  number/string forms reimplemented over .NET), fingerprint (+ stamp /
+  verify), validation (§8), unified diff engine with reverse-apply
+  verification, authoring builder that refuses to finalize invalid
+  documents. 59 tests, no runtime dependencies beyond the BCL.
+- **Conformance fixtures**: `interop-jcs-edges` fingerprint vector —
+  JCS number/string edge cases (1e+21, 1e-7, double artifacts, denormal
+  minimum, unicode keys, control characters, surrogate pairs) generated
+  by the TypeScript SDK and reproduced by the .NET SDK, proving
+  cross-SDK fingerprint agreement.
+
 ### Fixed
+- SDK (TypeScript): `validate` now returns validation errors instead of
+  throwing on malformed shapes — non-array facets, non-object patch /
+  approval / operation items, and non-array `entity.create` fields
+  (the validator's contract is to report, not crash). Both SDKs also now
+  reject a non-array `fields` member on `entity.create`.
 - SDK (TypeScript): the authoring builder surface (`createChangeset`,
   `addUiPatch`, `addDataPatch`, `addSchemaOp`, `finalize`,
   `artifactFingerprint`, `ChangesetValidationError`) is now exported from

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>0.1.0</Version>
+    <Description>Reference .NET SDK for the vivarium-changeset spec: JCS canonicalization, fingerprinting, validation, unified diff, and authoring. No apply logic — the changeset is a contract, not an executor.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/iyulab/vivarium-changeset</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Vivarium.Changeset.Tests" />
+  </ItemGroup>
+
+</Project>

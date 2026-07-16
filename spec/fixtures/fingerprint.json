@@ -33,5 +33,47 @@
       }
     },
     "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312"
+  },
+  {
+    "name": "interop-jcs-edges",
+    "document": {
+      "specVersion": "0.1.0",
+      "intent": "cross-SDK interop vector: exercises JCS number and string edges — 1e+21, 1e-7, 0.30000000000000004, unicode keys, control chars",
+      "provenance": {
+        "producedBy": "interop-vector-generator",
+        "createdAt": "2026-07-16T12:00:00Z",
+        "baseState": [],
+        "editContext": {
+          "é-key": 1e+21,
+          "à-key": 1e-7,
+          "z-key": 0.30000000000000004,
+          "text": "line\nbreak\ttab \"quote\" \\ € bell\u0007 emoji 😀",
+          "big": 9007199254740992,
+          "tiny": 5e-324,
+          "negative": -4.5,
+          "zero": 0
+        }
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "noop",
+            "explanation": "interop vector payload",
+            "operations": [
+              {
+                "op": "insert",
+                "entity": "x",
+                "values": {
+                  "n": 1e+30
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "fingerprint": "sha256:a3798847191cdf38a5e2992c99e0e5530253012d4977468aaf40a54e054e9bcb"
   }
 ]

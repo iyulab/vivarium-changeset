@@ -55,8 +55,42 @@ const minimal = {
     data: [],
   },
 };
+// cross-SDK interop vector: JCS number/string edges that differ most across
+// language runtimes — independent SDKs must reproduce this hash exactly
+const interopEdges = {
+  specVersion: "0.1.0",
+  intent:
+    "cross-SDK interop vector: exercises JCS number and string edges — 1e+21, 1e-7, 0.30000000000000004, unicode keys, control chars",
+  provenance: {
+    producedBy: "interop-vector-generator",
+    createdAt: "2026-07-16T12:00:00Z",
+    baseState: [],
+    editContext: {
+      "é-key": 1e21,
+      "à-key": 1e-7,
+      "z-key": 0.1 + 0.2,
+      text: 'line\nbreak\ttab "quote" \\ € bell emoji \u{1F600}',
+      big: 9007199254740992,
+      tiny: 5e-324,
+      negative: -4.5,
+      zero: 0,
+    },
+  },
+  patches: {
+    schema: [],
+    ui: [],
+    data: [
+      {
+        id: "noop",
+        explanation: "interop vector payload",
+        operations: [{ op: "insert", entity: "x", values: { n: 1e30 } }],
+      },
+    ],
+  },
+};
 write("fingerprint.json", [
   { name: "minimal-schema-change", document: minimal, fingerprint: fingerprintOf(minimal) },
+  { name: "interop-jcs-edges", document: interopEdges, fingerprint: fingerprintOf(interopEdges) },
 ]);
 
 // --- gate cases ---

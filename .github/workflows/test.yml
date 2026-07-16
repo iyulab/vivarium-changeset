@@ -23,3 +23,16 @@ jobs:
         run: |
           npm run generate-fixtures
           git diff --exit-code ../../spec/fixtures
+
+  sdk-dotnet:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/dotnet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Unit + conformance tests
+        run: dotnet test

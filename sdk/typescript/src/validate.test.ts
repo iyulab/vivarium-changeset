@@ -100,3 +100,26 @@ test("duplicate data patch ids are rejected", () => {
   ] as never;
   assert.equal(validate(doc).valid, false);
 });
+
+test("malformed shapes yield errors, never throw (validator contract)", () => {
+  const base = () => validDoc() as unknown as Record<string, unknown>;
+  const cases: Array<(d: Record<string, unknown>) => void> = [
+    (d) => { (d.patches as Record<string, unknown>).schema = "not-an-array"; },
+    (d) => { (d.patches as Record<string, unknown>).ui = 42; },
+    (d) => { (d.patches as Record<string, unknown>).data = {}; },
+    (d) => { (d.patches as Record<string, unknown>).schema = [null]; },
+    (d) => { (d.patches as Record<string, unknown>).ui = ["nope"]; },
+    (d) => { (d.patches as Record<string, unknown>).data = [null]; },
+    (d) => { (d.patches as Record<string, unknown>).schema = [{ op: "entity.create", entity: "x", fields: [null], explanation: "e" }]; },
+    (d) => { (d.patches as Record<string, unknown>).schema = [{ op: "entity.create", entity: "x", fields: 7, explanation: "e" }]; },
+    (d) => { (d.patches as Record<string, unknown>).data = [{ id: "p", explanation: "e", operations: [null] }]; },
+    (d) => { d.approvals = [null]; },
+    (d) => { d.approvals = ["str"]; },
+  ];
+  for (const [i, mutate] of cases.entries()) {
+    const doc = base();
+    mutate(doc);
+    const r = validate(doc); // must not throw
+    assert.equal(r.valid, false, `case ${i} should be invalid`);
+  }
+});

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Vivarium.Changeset.Tests/Vivarium.Changeset.Tests.csproj" />
+  <Project Path="Vivarium.Changeset/Vivarium.Changeset.csproj" />
+</Solution>
