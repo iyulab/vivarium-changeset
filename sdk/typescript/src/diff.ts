@@ -56,10 +56,10 @@ export function createUnifiedDiff(base: string, next: string, context = 3): stri
     const bCount = hunk.filter((o) => o.kind !== "-").length;
     out.push(`@@ -${aCount === 0 ? aStart - 1 : aStart},${aCount} +${bCount === 0 ? bStart - 1 : bStart},${bCount} @@`);
     for (const o of hunk) out.push(o.kind + o.line);
-    for (const o of hunk) {
-      if (o.kind !== "+") aLine++;
-      if (o.kind !== "-") bLine++;
-    }
+    // cursor = hunk start + hunk extent (the back-context keeps were already
+    // counted once by the outer loop — recompute absolutely, don't re-add)
+    aLine = aStart + aCount;
+    bLine = bStart + bCount;
     idx = stop;
   }
   return out.join("\n") + "\n";

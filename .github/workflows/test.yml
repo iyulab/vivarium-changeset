@@ -1,0 +1,25 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sdk-typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      # zero-dependency SDK — no install step by design
+      - name: Unit + conformance tests
+        run: npm test
+      - name: Fixtures are up to date with the reference implementation
+        run: |
+          npm run generate-fixtures
+          git diff --exit-code ../../spec/fixtures
