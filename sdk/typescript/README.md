@@ -37,11 +37,17 @@ draft = addUiPatch(draft, {
 const doc = finalize(draft);    // validates, stamps fingerprint — or throws with structured errors
 ```
 
-Verifying on the consuming side:
+Verifying on the consuming side. Unlike `finalize`, these APIs **report — they do not
+throw**; a conforming applier checks the results and refuses on failure (spec §7):
 
 ```ts
-validate(doc);          // spec §8 — structure, vocabulary, diff consistency
-verifyFingerprint(doc); // spec §6 — content-addressed integrity
+const result = validate(doc);   // spec §8 — structure, vocabulary, diff consistency
+if (!result.valid) {
+  throw new Error(`refusing changeset: ${result.errors.map((e) => e.path).join(", ")}`);
+}
+if (!verifyFingerprint(doc)) {  // spec §6 — content-addressed integrity
+  throw new Error("refusing changeset: fingerprint mismatch");
+}
 ```
 
 ## Surface
