@@ -4,9 +4,23 @@
   "description": "Reference TypeScript SDK for the Vivarium Changeset specification — construct, canonicalize, fingerprint, and validate changesets. No apply logic.",
   "type": "module",
   "license": "MIT",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iyulab/vivarium-changeset.git",
+    "directory": "sdk/typescript"
+  },
+  "homepage": "https://github.com/iyulab/vivarium-changeset#readme",
+  "bugs": "https://github.com/iyulab/vivarium-changeset/issues",
+  "keywords": [
+    "changeset",
+    "vivarium",
+    "fingerprint",
+    "jcs",
+    "rfc8785",
+    "ai-generated-ui"
+  ],
   "engines": {
-    "node": ">=23.6"
+    "node": ">=20"
   },
   "exports": {
     ".": {
