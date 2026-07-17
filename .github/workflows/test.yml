@@ -36,3 +36,22 @@ jobs:
           dotnet-version: "10.0.x"
       - name: Unit + conformance tests
         run: dotnet test
+
+  # Consumer-contact smoke (Phase 5.a): the README examples are extracted and
+  # executed as a fresh consumer — a throwaway package that npm-installs the
+  # TS SDK, and a throwaway console project referencing the .NET SDK. Catches
+  # examples that drift from the API or silently do nothing.
+  readme-consumer-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: TypeScript README examples as a fresh npm consumer
+        run: node tools/verify-readme-examples.ts typescript
+      - name: .NET README examples as a fresh project consumer
+        run: node tools/verify-readme-examples.ts dotnet

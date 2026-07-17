@@ -14,6 +14,10 @@ import {
   validate, verifyFingerprint,
 } from "@vivarium/changeset";
 
+// the artifact's current source, and the source the agent proposes
+const currentSource = "export function LoanScreen() { /* current */ }";
+const nextSource = "export function LoanScreen() { /* renders dueDate */ }";
+
 let draft = createChangeset({
   intent: "Add a due-date to the loan screen",
   producedBy: "my-agent",

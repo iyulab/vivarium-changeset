@@ -15,6 +15,10 @@ across the two (proven by the shared conformance fixtures, including the
 using System.Text.Json.Nodes;
 using Vivarium.Changeset;
 
+// the artifact's current source, and the source the agent proposes
+var currentSource = "export function LoanScreen() { /* current */ }";
+var nextSource = "export function LoanScreen() { /* renders dueDate */ }";
+
 var doc = new ChangesetBuilder(
         intent: "Add a due-date to the loan screen",
         producedBy: "my-agent",
@@ -32,11 +36,16 @@ var doc = new ChangesetBuilder(
     .Finalize();                    // validates, stamps fingerprint — or throws with structured errors
 ```
 
-Verifying on the consuming side:
+Verifying on the consuming side. Unlike `Finalize`, these APIs **report — they do not
+throw**; a conforming applier checks the results and refuses on failure (spec §7):
 
 ```csharp
-ChangesetValidator.Validate(doc);  // spec §8 — structure, vocabulary, diff consistency
-ChangesetFingerprint.Verify(doc);  // spec §6 — content-addressed integrity
+var result = ChangesetValidator.Validate(doc);  // spec §8 — structure, vocabulary, diff consistency
+if (!result.Valid)
+    throw new InvalidOperationException($"refusing changeset: {string.Join(", ", result.Errors.Select(e => e.Path))}");
+
+if (!ChangesetFingerprint.Verify(doc))          // spec §6 — content-addressed integrity
+    throw new InvalidOperationException("refusing changeset: fingerprint mismatch");
 ```
 
 ## Surface
