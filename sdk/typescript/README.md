@@ -1,4 +1,4 @@
-# @vivarium/changeset — TypeScript reference SDK
+# @vivariumjs/changeset — TypeScript reference SDK
 
 Construct, canonicalize, fingerprint, and validate [Vivarium Changeset](../../spec/SPEC.md)
 documents. **Contains no apply logic** — appliers (e.g. vivarium-stage) are consumers of
@@ -14,7 +14,7 @@ directly and requires Node ≥ 23.6.
 import {
   createChangeset, addSchemaOp, addUiPatch, finalize,
   validate, verifyFingerprint,
-} from "@vivarium/changeset";
+} from "@vivariumjs/changeset";
 
 // the artifact's current source, and the source the agent proposes
 const currentSource = "export function LoanScreen() { /* current */ }";

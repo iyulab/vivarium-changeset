@@ -1,5 +1,5 @@
 {
-  "name": "@vivarium/changeset",
+  "name": "@vivariumjs/changeset",
   "version": "0.1.0",
   "description": "Reference TypeScript SDK for the Vivarium Changeset specification — construct, canonicalize, fingerprint, and validate changesets. No apply logic.",
   "type": "module",
