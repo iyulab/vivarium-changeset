@@ -7,6 +7,11 @@ are pre-1.0.
 
 ## [Unreleased]
 
+> The first npm publish (`@vivariumjs/changeset@0.1.0`, 2026-07-17) shipped
+> with the SDK changes below included; the `v0.1.0` git tag predates them
+> (it tagged the spec). The npm scope is `@vivariumjs` — the `@vivarium`
+> org name was already taken on npm.
+
 ### Changed
 - SDK (TypeScript): the package now ships built JavaScript — `exports`
   points at `dist/*.js` + `*.d.ts` (built by `prepack`; strict-mode tsc
