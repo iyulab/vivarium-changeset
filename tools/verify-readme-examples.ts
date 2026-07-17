@@ -39,13 +39,21 @@ function verifyTypescript(): void {
   const fences = extractFences(join(sdkDir, "README.md"), "ts");
   const consumer = mkdtempSync(join(tmpdir(), "vivarium-readme-ts-"));
   try {
+    // Consume the SDK the way a registry consumer would: pack a tarball
+    // (prepack builds dist/) and install that — not a symlink. This also
+    // regression-tests that the published shape is importable from inside
+    // node_modules (raw .ts would fail: Node refuses type stripping there).
+    const { name, version } = JSON.parse(readFileSync(join(sdkDir, "package.json"), "utf8"));
+    const tarball = `${name.replace("@", "").replace("/", "-")}-${version}.tgz`;
+    run("npm", ["install", "--no-audit", "--no-fund"], sdkDir);
+    run("npm", ["pack", "--pack-destination", consumer], sdkDir);
     writeFileSync(join(consumer, "package.json"), JSON.stringify({
       name: "readme-consumer", private: true, type: "module",
     }));
-    run("npm", ["install", "--no-audit", "--no-fund", sdkDir], consumer);
+    run("npm", ["install", "--no-audit", "--no-fund", tarball], consumer);
     writeFileSync(join(consumer, "consumer.ts"), fences.join("\n"));
     run("node", ["consumer.ts"], consumer);
-    console.log(`PASS typescript — ${fences.length} fences executed as one consumer module`);
+    console.log(`PASS typescript — ${fences.length} fences executed against the packed tarball`);
   } finally {
     rmSync(consumer, { recursive: true, force: true });
   }
