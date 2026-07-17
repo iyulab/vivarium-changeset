@@ -7,6 +7,21 @@ are pre-1.0.
 
 ## [Unreleased]
 
+### Changed
+- SDK (TypeScript): the package now ships built JavaScript — `exports`
+  points at `dist/*.js` + `*.d.ts` (built by `prepack`; strict-mode tsc
+  with rewritten `.ts` import extensions) instead of raw TypeScript
+  source. Raw-`.ts` exports were unimportable from inside `node_modules`
+  (Node refuses type stripping there), so a registry/tarball install of
+  0.1.0 could not be imported at all. Runtime dependencies remain zero;
+  sibling `file:` consumers build once (`npm ci && npm run build`).
+- SDK READMEs (both): the consuming-side verification examples now check
+  the results and refuse on failure — `validate`/`verifyFingerprint`
+  (`ChangesetValidator.Validate`/`ChangesetFingerprint.Verify`) report,
+  they do not throw; the previous bare-statement examples silently
+  accepted tampered changesets. Usage examples are now self-contained and
+  executed against the packed package in CI (`readme-consumer-smoke`).
+
 ### Added
 - **.NET reference SDK** (`sdk/dotnet`, `Vivarium.Changeset`, net10.0):
   same surface as the TypeScript SDK — JCS canonicalization (ECMAScript
