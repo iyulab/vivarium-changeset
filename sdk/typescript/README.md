@@ -4,7 +4,9 @@ Construct, canonicalize, fingerprint, and validate [Vivarium Changeset](../../sp
 documents. **Contains no apply logic** — appliers (e.g. vivarium-stage) are consumers of
 this format, not part of this SDK.
 
-Zero runtime dependencies. Requires Node ≥ 23.6 (native TypeScript execution).
+Zero runtime dependencies. The package ships built ES modules (`dist/`, emitted by
+`npm run build` / `prepack`); working in this repo runs the TypeScript source
+directly and requires Node ≥ 23.6.
 
 ## Usage
 
