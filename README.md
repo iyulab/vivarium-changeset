@@ -32,7 +32,7 @@ Conceptually, a changeset bundles three kinds of patch under one version and one
 
 | Facet | Describes | Lineage |
 | --- | --- | --- |
-| **Schema patch** | Structural change to the data model | generalizes the reviewed-plan model proven in [Schemorph](https://github.com/iyulab/Schemorph) |
+| **Schema patch** | Structural change to the data model | generalizes a production-proven reviewed-plan migration model |
 | **UI patch** | Change to screens/components | targets sandbox-runnable UI such as [Vivarium](https://github.com/iyulab/vivarium) output |
 | **Data patch** | Seeds, backfills, one-off transformations | versioned, run-once, checksummed |
 
