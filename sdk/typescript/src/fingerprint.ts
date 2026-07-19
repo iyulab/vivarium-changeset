@@ -14,6 +14,13 @@ export function fingerprintOf(document: Record<string, unknown>): string {
   return FINGERPRINT_PREFIX + digest;
 }
 
+/**
+ * Artifact fingerprint (spec §4): SHA-256 over the artifact's raw UTF-8
+ * content bytes — artifact content is not JSON, so no JCS.
+ */
+export const artifactFingerprint = (content: string): string =>
+  FINGERPRINT_PREFIX + createHash("sha256").update(content, "utf8").digest("hex");
+
 /** Return a copy of the document with its computed fingerprint stamped in. */
 export function stampFingerprint<T extends Record<string, unknown>>(document: T): T & { fingerprint: string } {
   return { ...document, fingerprint: fingerprintOf(document) };

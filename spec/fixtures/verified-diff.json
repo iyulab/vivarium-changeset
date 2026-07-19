@@ -1,0 +1,486 @@
+[
+  {
+    "name": "clean-apply",
+    "layer": "complete",
+    "expect": "applies",
+    "base": "const title = \"Loans\";\nexport function LoanScreen() {\n  return <Table title={title} />;\n}\n",
+    "applied": "const title = \"Active loans\";\nexport function LoanScreen() {\n  return <Table title={title} />;\n}\n",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "screen-loans",
+      "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+      "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+      "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+            "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+            "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "context-mismatch",
+    "layer": "complete",
+    "expect": "rejected-against-base",
+    "note": "structurally valid; layer 2 ② fails — a context byte differs from the fingerprinted base",
+    "base": "const title = \"Loans\";\nexport function LoanScreen() {\n  return <Table title={title} />;\n}\n",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "screen-loans",
+      "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+      "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export functiom LoanScreen() {\n   return <Table title={title} />;\n }\n",
+      "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+            "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export functiom LoanScreen() {\n   return <Table title={title} />;\n }\n",
+            "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "base-fingerprint-mismatch",
+    "layer": "complete",
+    "expect": "rejected-against-base",
+    "note": "structurally valid; layer 2 ① fails — supplied base drifted from baseFingerprint",
+    "base": "const title = \"Loans\";\nexport function LoanScreen() {\n  return <Table title={title} />;\n}\n// drifted\n",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "screen-loans",
+      "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+      "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+      "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+            "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+            "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "creation-rejected",
+    "layer": "structural",
+    "expect": "invalid",
+    "note": "baseFingerprint null — creation is whole-artifact@0's job",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "screen-loans",
+      "baseFingerprint": null,
+      "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+      "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:abababababababababababababababababababababababababababababababab"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": null,
+            "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+            "newFingerprint": "sha256:461a7c04b12dffec83776bbf01beb8effdbedfae34cd4efa520f57167c39f18e",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "noop-rejected",
+    "layer": "structural",
+    "expect": "invalid",
+    "note": "newFingerprint equals baseFingerprint",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "screen-loans",
+      "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+      "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+      "newFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen-loans",
+            "fingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen-loans",
+            "baseFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+            "diff": "@@ -1,4 +1,4 @@\n-const title = \"Loans\";\n+const title = \"Active loans\";\n export function LoanScreen() {\n   return <Table title={title} />;\n }\n",
+            "newFingerprint": "sha256:c47425b32faf56c1131368e4708ac136f922ef0d9eb7f4b280e86904e3808916",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "crlf-mixed",
+    "layer": "complete",
+    "expect": "applies",
+    "base": "alpha\r\nbeta\ngamma\r\ndelta\n",
+    "applied": "alpha\r\nbeta(2)\ngamma\r\ndelta\n",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "crlf-artifact",
+      "baseFingerprint": "sha256:ec6b3f2a982dc194b63afd409090ba9cc13f0338b655c1b733bcf84705107912",
+      "diff": "@@ -1,4 +1,4 @@\n alpha\r\n-beta\n+beta(2)\n gamma\r\n delta\n",
+      "newFingerprint": "sha256:dc5df87f38f2898f8f703675a3b1ea05ee1ca2e724cfc44959e8c4aeff9f299e",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "crlf-artifact",
+            "fingerprint": "sha256:ec6b3f2a982dc194b63afd409090ba9cc13f0338b655c1b733bcf84705107912"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "crlf-artifact",
+            "baseFingerprint": "sha256:ec6b3f2a982dc194b63afd409090ba9cc13f0338b655c1b733bcf84705107912",
+            "diff": "@@ -1,4 +1,4 @@\n alpha\r\n-beta\n+beta(2)\n gamma\r\n delta\n",
+            "newFingerprint": "sha256:dc5df87f38f2898f8f703675a3b1ea05ee1ca2e724cfc44959e8c4aeff9f299e",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "eof-no-newline",
+    "layer": "complete",
+    "expect": "applies",
+    "base": "line1\nline2",
+    "applied": "line1\nline2 changed",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "noeof-artifact",
+      "baseFingerprint": "sha256:683376e290829b482c2655745caffa7a1dccfa10afaa62dac2b42dd6c68d0f83",
+      "diff": "@@ -1,2 +1,2 @@\n line1\n-line2\n\\ No newline at end of file\n+line2 changed\n\\ No newline at end of file\n",
+      "newFingerprint": "sha256:b097e7ade080ef80c7fc93d445e45e5c9ab260566aaac2349bf534e23ca8488c",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "noeof-artifact",
+            "fingerprint": "sha256:683376e290829b482c2655745caffa7a1dccfa10afaa62dac2b42dd6c68d0f83"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "noeof-artifact",
+            "baseFingerprint": "sha256:683376e290829b482c2655745caffa7a1dccfa10afaa62dac2b42dd6c68d0f83",
+            "diff": "@@ -1,2 +1,2 @@\n line1\n-line2\n\\ No newline at end of file\n+line2 changed\n\\ No newline at end of file\n",
+            "newFingerprint": "sha256:b097e7ade080ef80c7fc93d445e45e5c9ab260566aaac2349bf534e23ca8488c",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "multi-hunk-apply",
+    "layer": "complete",
+    "expect": "applies",
+    "base": "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\nline 13\nline 14\nline 15\nline 16\nline 17\nline 18\nline 19\nline 20\nline 21\nline 22\nline 23\nline 24\nline 25\nline 26\nline 27\nline 28\nline 29\nline 30\n",
+    "applied": "line 1\nline 2\nline 3 (edited)\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\nline 13\nline 14\nline 15\nline 16\nline 17\nline 18\nline 19\nline 20\nline 21\nline 22\nline 23\nline 24\nline 25\nline 26\nline 27 (edited)\nline 28\nline 29\nline 30\n",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "multi-artifact",
+      "baseFingerprint": "sha256:a328ec5f9c28d95bf62c6d4376a2fef757d00f158bc7b1d2776ec200d5429ead",
+      "diff": "@@ -1,6 +1,6 @@\n line 1\n line 2\n-line 3\n+line 3 (edited)\n line 4\n line 5\n line 6\n@@ -24,7 +24,7 @@\n line 24\n line 25\n line 26\n-line 27\n+line 27 (edited)\n line 28\n line 29\n line 30\n",
+      "newFingerprint": "sha256:00c7f0bdb52fba86338181923887b4117ced61cddd9a58f807f97aadd25742a4",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "multi-artifact",
+            "fingerprint": "sha256:a328ec5f9c28d95bf62c6d4376a2fef757d00f158bc7b1d2776ec200d5429ead"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "multi-artifact",
+            "baseFingerprint": "sha256:a328ec5f9c28d95bf62c6d4376a2fef757d00f158bc7b1d2776ec200d5429ead",
+            "diff": "@@ -1,6 +1,6 @@\n line 1\n line 2\n-line 3\n+line 3 (edited)\n line 4\n line 5\n line 6\n@@ -24,7 +24,7 @@\n line 24\n line 25\n line 26\n-line 27\n+line 27 (edited)\n line 28\n line 29\n line 30\n",
+            "newFingerprint": "sha256:00c7f0bdb52fba86338181923887b4117ced61cddd9a58f807f97aadd25742a4",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "insert-at-start",
+    "layer": "complete",
+    "expect": "applies",
+    "note": "pure-insertion hunk before line 1 — header uses aStart 0, aCount 0",
+    "base": "a\nb\n",
+    "applied": "top\na\nb\n",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "insert-artifact",
+      "baseFingerprint": "sha256:911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2",
+      "diff": "@@ -1,2 +1,3 @@\n+top\n a\n b\n",
+      "newFingerprint": "sha256:294d8c760db02afe70c58caf2fe6acbc4e0f7c2ad37c854cb16ad9d18ce3754c",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "insert-artifact",
+            "fingerprint": "sha256:911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "insert-artifact",
+            "baseFingerprint": "sha256:911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2",
+            "diff": "@@ -1,2 +1,3 @@\n+top\n a\n b\n",
+            "newFingerprint": "sha256:294d8c760db02afe70c58caf2fe6acbc4e0f7c2ad37c854cb16ad9d18ce3754c",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "eof-state-change-only",
+    "layer": "complete",
+    "expect": "applies",
+    "note": "content bytes identical except the trailing newline — still a real, reviewable change",
+    "base": "a\nb",
+    "applied": "a\nb\n",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "eofstate-artifact",
+      "baseFingerprint": "sha256:7e18f737311b2dc3b2f269dd78396b0351f14fb66efa879f768cb23181883c78",
+      "diff": "@@ -1,2 +1,2 @@\n a\n-b\n\\ No newline at end of file\n+b\n",
+      "newFingerprint": "sha256:911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "eofstate-artifact",
+            "fingerprint": "sha256:7e18f737311b2dc3b2f269dd78396b0351f14fb66efa879f768cb23181883c78"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "eofstate-artifact",
+            "baseFingerprint": "sha256:7e18f737311b2dc3b2f269dd78396b0351f14fb66efa879f768cb23181883c78",
+            "diff": "@@ -1,2 +1,2 @@\n a\n-b\n\\ No newline at end of file\n+b\n",
+            "newFingerprint": "sha256:911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "delete-to-empty",
+    "layer": "complete",
+    "expect": "applies",
+    "base": "only\n",
+    "applied": "",
+    "patch": {
+      "profile": "verified-diff@0",
+      "artifactId": "empty-artifact",
+      "baseFingerprint": "sha256:321b4285d2fec34a6dc5b6fdb1ab9ee46b1a3129c83e52a00a713a38bac0fe00",
+      "diff": "@@ -1,1 +0,0 @@\n-only\n",
+      "newFingerprint": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "explanation": "fixture: transform base into next"
+    },
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "verified-diff fixture document",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "empty-artifact",
+            "fingerprint": "sha256:321b4285d2fec34a6dc5b6fdb1ab9ee46b1a3129c83e52a00a713a38bac0fe00"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "empty-artifact",
+            "baseFingerprint": "sha256:321b4285d2fec34a6dc5b6fdb1ab9ee46b1a3129c83e52a00a713a38bac0fe00",
+            "diff": "@@ -1,1 +0,0 @@\n-only\n",
+            "newFingerprint": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "explanation": "fixture: transform base into next"
+          }
+        ],
+        "data": []
+      }
+    }
+  }
+]

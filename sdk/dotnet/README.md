@@ -40,12 +40,40 @@ Verifying on the consuming side. Unlike `Finalize`, these APIs **report — they
 throw**; a conforming applier checks the results and refuses on failure (spec §7):
 
 ```csharp
-var result = ChangesetValidator.Validate(doc);  // spec §8 — structure, vocabulary, diff consistency
+var result = ChangesetValidator.Validate(doc);  // spec §8 layer 1 — structure, vocabulary, diff consistency
 if (!result.Valid)
     throw new InvalidOperationException($"refusing changeset: {string.Join(", ", result.Errors.Select(e => e.Path))}");
 
 if (!ChangesetFingerprint.Verify(doc))          // spec §6 — content-addressed integrity
     throw new InvalidOperationException("refusing changeset: fingerprint mismatch");
+```
+
+### `verified-diff@0` UI patches (spec 0.2)
+
+Surgical edits ride as a strict-dialect unified diff instead of a full artifact
+re-emission. `ChangesetValidator.Validate` covers the document-only layer; before
+applying, an applier MUST run the base-supplied layer (spec §8 layer 2):
+
+```csharp
+using System.Text.Json.Nodes;
+using Vivarium.Changeset;
+
+var baseContent = "const title = \"Loans\";\n";
+var nextContent = "const title = \"Active loans\";\n";
+var patch = new JsonObject
+{
+    ["profile"] = "verified-diff@0",
+    ["artifactId"] = "screen-loans",
+    ["baseFingerprint"] = ChangesetFingerprint.OfArtifact(baseContent),
+    ["diff"] = VerifiedDiff.Create(baseContent, nextContent), // deterministic, fail-closed dialect (spec §5.2.2)
+    ["newFingerprint"] = ChangesetFingerprint.OfArtifact(nextContent),
+    ["explanation"] = "Rename the title only",
+};
+
+var verdict = VerifiedDiff.VerifyAgainstBase(patch, baseContent); // ① base fingerprint ② apply + result fingerprint
+if (!verdict.Ok)
+    throw new InvalidOperationException("refusing patch: " + verdict.Errors[0].Message);
+_ = verdict.NewContent; // exactly what the reviewer's diff described
 ```
 
 ## Surface
@@ -55,8 +83,9 @@ if (!ChangesetFingerprint.Verify(doc))          // spec §6 — content-addresse
 | `JsonCanonicalizer` | `Canonicalize`, `CanonicalBytes` — RFC 8785 (JCS) |
 | `ChangesetFingerprint` | `Of`, `Stamp`, `Verify`, `OfArtifact`, `Prefix` |
 | `UnifiedDiff` | `Create`, `Apply`, `ReverseApply` |
-| `ChangesetValidator` | `Validate`, `SupportedSpecVersions` |
-| `ChangesetBuilder` | `AddSchemaOp`, `AddUiPatch`, `AddDataPatch`, `ToDraft`, `Finalize` |
+| `VerifiedDiff` | `Create`, `Apply`, `ParseStrict`, `VerifyAgainstBase` — spec §5.2.2 dialect |
+| `ChangesetValidator` | `Validate`, `SupportedSpecVersions`, `BaseStateKinds` |
+| `ChangesetBuilder` | `AddSchemaOp`, `AddUiPatch`, `AddVerifiedDiffPatch`, `AddDataPatch`, `ToDraft`, `Finalize` |
 
 ## Conformance
 

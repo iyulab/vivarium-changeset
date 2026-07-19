@@ -87,6 +87,32 @@ public sealed class ChangesetBuilder
         return this;
     }
 
+    /// <summary>
+    /// verified-diff@0 (spec §5.2.2): diff and both fingerprints are derived
+    /// from the contents — by construction consistent. Refuses no-ops at
+    /// authoring time. Adding one lifts the draft's specVersion to 0.2.0
+    /// (the lowest version the document now requires — spec §9 minimality,
+    /// automated).
+    /// </summary>
+    public ChangesetBuilder AddVerifiedDiffPatch(string artifactId, string baseContent, string newContent, string explanation)
+    {
+        var diff = VerifiedDiff.Create(baseContent, newContent);
+        if (diff == "")
+            throw new ChangesetValidationException(
+                [new ValidationError("$.patches.ui", "no-op verified-diff patch: contents are identical (spec §5.2.2)")]);
+        FacetArray("ui").Add(new JsonObject
+        {
+            ["profile"] = "verified-diff@0",
+            ["artifactId"] = artifactId,
+            ["baseFingerprint"] = ChangesetFingerprint.OfArtifact(baseContent),
+            ["diff"] = diff,
+            ["newFingerprint"] = ChangesetFingerprint.OfArtifact(newContent),
+            ["explanation"] = explanation,
+        });
+        _draft["specVersion"] = "0.2.0";
+        return this;
+    }
+
     public ChangesetBuilder AddDataPatch(string id, string explanation, IEnumerable<JsonObject> operations)
     {
         FacetArray("data").Add(new JsonObject

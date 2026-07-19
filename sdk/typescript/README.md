@@ -47,13 +47,38 @@ Verifying on the consuming side. Unlike `finalize`, these APIs **report — they
 throw**; a conforming applier checks the results and refuses on failure (spec §7):
 
 ```ts
-const result = validate(doc);   // spec §8 — structure, vocabulary, diff consistency
+const result = validate(doc);   // spec §8 layer 1 — structure, vocabulary, diff consistency
 if (!result.valid) {
   throw new Error(`refusing changeset: ${result.errors.map((e) => e.path).join(", ")}`);
 }
 if (!verifyFingerprint(doc)) {  // spec §6 — content-addressed integrity
   throw new Error("refusing changeset: fingerprint mismatch");
 }
+```
+
+### `verified-diff@0` UI patches (spec 0.2)
+
+Surgical edits ride as a strict-dialect unified diff instead of a full artifact
+re-emission. `validate` covers the document-only layer; before applying, an applier
+MUST run the base-supplied layer (spec §8 layer 2):
+
+```ts
+import { createVerifiedDiff, verifyAgainstBase, artifactFingerprint } from "@vivariumjs/changeset";
+
+const base = "const title = \"Loans\";\n";
+const next = "const title = \"Active loans\";\n";
+const patch = {
+  profile: "verified-diff@0" as const,
+  artifactId: "screen-loans",
+  baseFingerprint: artifactFingerprint(base),
+  diff: createVerifiedDiff(base, next), // deterministic, fail-closed dialect (spec §5.2.2)
+  newFingerprint: artifactFingerprint(next),
+  explanation: "Rename the title only",
+};
+
+const verdict = verifyAgainstBase(patch, base); // ① base fingerprint ② apply + result fingerprint
+if (!verdict.ok) throw new Error("refusing patch: " + verdict.errors[0].message);
+verdict.newContent; // exactly what the reviewer's diff described
 ```
 
 ## Surface
@@ -63,7 +88,8 @@ if (!verifyFingerprint(doc)) {  // spec §6 — content-addressed integrity
 | canonicalize | `canonicalize`, `canonicalBytes` — RFC 8785 (JCS) |
 | fingerprint | `fingerprintOf`, `stampFingerprint`, `verifyFingerprint`, `FINGERPRINT_PREFIX` |
 | diff | `createUnifiedDiff`, `applyUnifiedDiff`, `reverseApplyUnifiedDiff` |
-| validate | `validate`, `SUPPORTED_SPEC_VERSIONS` |
+| verified-diff | `createVerifiedDiff`, `applyVerifiedDiff`, `parseVerifiedDiff`, `verifyAgainstBase` — spec §5.2.2 dialect |
+| validate | `validate`, `SUPPORTED_SPEC_VERSIONS`, `BASE_STATE_KINDS` |
 | builder | `createChangeset`, `addSchemaOp`, `addUiPatch`, `addDataPatch`, `finalize`, `artifactFingerprint` |
 
 ## Conformance

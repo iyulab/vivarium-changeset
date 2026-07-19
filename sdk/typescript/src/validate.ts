@@ -1,11 +1,14 @@
-import { createHash } from "node:crypto";
 import { reverseApplyUnifiedDiff } from "./diff.ts";
-import { FINGERPRINT_PREFIX, fingerprintOf } from "./fingerprint.ts";
+import { artifactFingerprint, FINGERPRINT_PREFIX, fingerprintOf } from "./fingerprint.ts";
+import { parseVerifiedDiff } from "./verified-diff.ts";
 
 export interface ValidationError { path: string; message: string }
 export interface ValidationResult { valid: boolean; errors: ValidationError[] }
 
-export const SUPPORTED_SPEC_VERSIONS = ["0.1.0"];
+export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0"];
+
+/** Closed `baseState.kind` vocabulary (spec §4, 0.2). */
+export const BASE_STATE_KINDS = ["schema", "ui-artifact", "changeset"];
 
 const SCHEMA_OPS: Record<string, string[]> = {
   "entity.create": ["op", "entity", "fields", "explanation"],
@@ -21,10 +24,11 @@ const SCHEMA_OPS: Record<string, string[]> = {
 const LOGICAL_TYPES = ["string", "number", "boolean", "date", "datetime", "reference", "json"];
 const DATA_OPS = ["insert", "update", "delete"];
 
-const artifactFingerprint = (content: string): string =>
-  FINGERPRINT_PREFIX + createHash("sha256").update(content, "utf8").digest("hex");
-
-/** Validate a parsed changeset document against spec §8 (0.1.0). */
+/**
+ * Layer-1 structural validation of a parsed changeset document (spec §8).
+ * Complete (base-supplied) verification of verified-diff patches is a
+ * separate operation — see verifyAgainstBase in ./verified-diff.ts.
+ */
 export function validate(document: unknown): ValidationResult {
   const errors: ValidationError[] = [];
   const err = (path: string, message: string) => errors.push({ path, message });
@@ -57,6 +61,22 @@ export function validate(document: unknown): ValidationResult {
     if (typeof prov.producedBy !== "string") err("$.provenance.producedBy", "required string");
     if (typeof prov.createdAt !== "string") err("$.provenance.createdAt", "required RFC 3339 string");
     if (!Array.isArray(prov.baseState)) err("$.provenance.baseState", "required array");
+    else (prov.baseState as unknown[]).forEach((entry, i) => {
+      const path = `$.provenance.baseState[${i}]`;
+      if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+        err(path, "must be an object (spec §4 — malformed entries are validation failures, not crashes)");
+        return;
+      }
+      const e = entry as Record<string, unknown>;
+      checkMembers(e, ["kind", "ref", "fingerprint"], path);
+      if (!BASE_STATE_KINDS.includes(e.kind as string)) {
+        err(`${path}.kind`, `unknown baseState kind: ${String(e.kind)} (closed vocabulary, spec §4)`);
+      }
+      if (typeof e.ref !== "string" || e.ref === "") err(`${path}.ref`, "required non-empty string");
+      if (typeof e.fingerprint !== "string" || !e.fingerprint.startsWith(FINGERPRINT_PREFIX)) {
+        err(`${path}.fingerprint`, "must be a sha256:-prefixed string");
+      }
+    });
   }
 
   // patches
@@ -108,9 +128,36 @@ export function validate(document: unknown): ValidationResult {
     }
   });
 
+  const is02 = doc.specVersion === "0.2.0";
+
   ui.forEach((p, i) => {
     const path = `$.patches.ui[${i}]`;
     if (!isRecord(p)) { err(path, "must be an object"); return; }
+    if (p.profile === "verified-diff@0") {
+      if (!is02) {
+        err(`${path}.profile`, `verified-diff@0 requires specVersion 0.2.0 (document declares ${String(doc.specVersion)})`);
+        return;
+      }
+      checkMembers(p, ["profile", "artifactId", "baseFingerprint", "diff", "newFingerprint", "explanation"], path);
+      if (typeof p.artifactId !== "string") err(`${path}.artifactId`, "required string");
+      if (typeof p.explanation !== "string" || p.explanation === "") err(`${path}.explanation`, "explanation required");
+      if (p.baseFingerprint === null) {
+        err(`${path}.baseFingerprint`, "must not be null — creation is whole-artifact@0's job (spec §5.2.2)");
+      } else if (typeof p.baseFingerprint !== "string" || !p.baseFingerprint.startsWith(FINGERPRINT_PREFIX)) {
+        err(`${path}.baseFingerprint`, "must be a sha256:-prefixed string");
+      }
+      if (typeof p.newFingerprint !== "string" || !p.newFingerprint.startsWith(FINGERPRINT_PREFIX)) {
+        err(`${path}.newFingerprint`, "must be a sha256:-prefixed string");
+      } else if (p.newFingerprint === p.baseFingerprint) {
+        err(`${path}.newFingerprint`, "no-op patch: newFingerprint equals baseFingerprint (spec §5.2.2)");
+      }
+      if (typeof p.diff !== "string") err(`${path}.diff`, "required string (the diff is the review surface)");
+      else {
+        try { parseVerifiedDiff(p.diff); }
+        catch (e) { err(`${path}.diff`, `outside the verified-diff dialect: ${(e as Error).message}`); }
+      }
+      return;
+    }
     checkMembers(p, ["profile", "artifactId", "baseFingerprint", "newContent", "reviewDiff", "explanation"], path);
     if (p.profile !== "whole-artifact@0") { err(`${path}.profile`, `unknown UI patch profile: ${String(p.profile)}`); return; }
     if (typeof p.artifactId !== "string") err(`${path}.artifactId`, "required string");

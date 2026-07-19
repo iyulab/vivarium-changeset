@@ -1,0 +1,117 @@
+[
+  {
+    "name": "lineage-changeset-kind-valid",
+    "expect": "valid",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "baseState tightening fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "changeset",
+            "ref": "cs-41",
+            "fingerprint": "sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "obsolete",
+            "explanation": "fixture payload"
+          }
+        ],
+        "ui": [],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "unknown-kind-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "baseState tightening fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "tenant",
+            "ref": "t-1",
+            "fingerprint": "sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "obsolete",
+            "explanation": "fixture payload"
+          }
+        ],
+        "ui": [],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "malformed-entry-missing-fingerprint-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "baseState tightening fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "default"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "obsolete",
+            "explanation": "fixture payload"
+          }
+        ],
+        "ui": [],
+        "data": []
+      }
+    }
+  },
+  {
+    "name": "non-object-entry-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "baseState tightening fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-07-19T00:00:00Z",
+        "baseState": [
+          "schema@default"
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "obsolete",
+            "explanation": "fixture payload"
+          }
+        ],
+        "ui": [],
+        "data": []
+      }
+    }
+  }
+]

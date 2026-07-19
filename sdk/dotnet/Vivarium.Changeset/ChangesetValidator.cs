@@ -7,10 +7,17 @@ public sealed record ValidationError(string Path, string Message);
 
 public sealed record ValidationResult(bool Valid, IReadOnlyList<ValidationError> Errors);
 
-/// <summary>Validate a parsed changeset document against spec §8 (0.1.0).</summary>
+/// <summary>
+/// Layer-1 structural validation of a parsed changeset document (spec §8).
+/// Complete (base-supplied) verification of verified-diff patches is a
+/// separate operation — see <see cref="VerifiedDiff.VerifyAgainstBase"/>.
+/// </summary>
 public static class ChangesetValidator
 {
-    public static readonly string[] SupportedSpecVersions = ["0.1.0"];
+    public static readonly string[] SupportedSpecVersions = ["0.1.0", "0.2.0"];
+
+    /// <summary>Closed <c>baseState.kind</c> vocabulary (spec §4, 0.2).</summary>
+    public static readonly string[] BaseStateKinds = ["schema", "ui-artifact", "changeset"];
 
     private static readonly Dictionary<string, string[]> SchemaOps = new()
     {
@@ -75,7 +82,24 @@ public static class ChangesetValidator
             CheckMembers(prov, ["producedBy", "createdAt", "baseState", "editContext"], "$.provenance");
             if (!TryString(prov["producedBy"], out _)) Err("$.provenance.producedBy", "required string");
             if (!TryString(prov["createdAt"], out _)) Err("$.provenance.createdAt", "required RFC 3339 string");
-            if (prov["baseState"] is not JsonArray) Err("$.provenance.baseState", "required array");
+            if (prov["baseState"] is not JsonArray baseState) Err("$.provenance.baseState", "required array");
+            else
+                for (var i = 0; i < baseState.Count; i++)
+                {
+                    var path = $"$.provenance.baseState[{i}]";
+                    if (baseState[i] is not JsonObject entry)
+                    {
+                        Err(path, "must be an object (spec §4 — malformed entries are validation failures, not crashes)");
+                        continue;
+                    }
+                    CheckMembers(entry, ["kind", "ref", "fingerprint"], path);
+                    if (!TryString(entry["kind"], out var kind) || !BaseStateKinds.Contains(kind))
+                        Err($"{path}.kind", $"unknown baseState kind: {entry["kind"]?.ToJsonString() ?? "undefined"} (closed vocabulary, spec §4)");
+                    if (!TryString(entry["ref"], out var entryRef) || entryRef == "")
+                        Err($"{path}.ref", "required non-empty string");
+                    if (!TryString(entry["fingerprint"], out var entryFp) || !entryFp.StartsWith(ChangesetFingerprint.Prefix, StringComparison.Ordinal))
+                        Err($"{path}.fingerprint", "must be a sha256:-prefixed string");
+                }
         }
 
         // patches
@@ -129,10 +153,40 @@ public static class ChangesetValidator
                 Err($"{path}.newType", $"unknown logical type: {p["newType"]?.ToJsonString() ?? "undefined"}");
         }
 
+        var is02 = specVersion == "0.2.0";
+
         for (var i = 0; i < ui.Count; i++)
         {
             var path = $"$.patches.ui[{i}]";
             if (ui[i] is not JsonObject p) { Err(path, "must be an object"); continue; }
+            if (TryString(p["profile"], out var uiProfile) && uiProfile == "verified-diff@0")
+            {
+                if (!is02)
+                {
+                    Err($"{path}.profile", $"verified-diff@0 requires specVersion 0.2.0 (document declares {doc["specVersion"]?.ToJsonString() ?? "undefined"})");
+                    continue;
+                }
+                CheckMembers(p, ["profile", "artifactId", "baseFingerprint", "diff", "newFingerprint", "explanation"], path);
+                if (!TryString(p["artifactId"], out _)) Err($"{path}.artifactId", "required string");
+                if (!TryString(p["explanation"], out var vexpl) || vexpl == "") Err($"{path}.explanation", "explanation required");
+                var hasBaseFp = TryString(p["baseFingerprint"], out var vBaseFp);
+                if (p.ContainsKey("baseFingerprint") && p["baseFingerprint"] is null)
+                    Err($"{path}.baseFingerprint", "must not be null — creation is whole-artifact@0's job (spec §5.2.2)");
+                else if (!hasBaseFp || !vBaseFp.StartsWith(ChangesetFingerprint.Prefix, StringComparison.Ordinal))
+                    Err($"{path}.baseFingerprint", "must be a sha256:-prefixed string");
+                if (!TryString(p["newFingerprint"], out var vNewFp) || !vNewFp.StartsWith(ChangesetFingerprint.Prefix, StringComparison.Ordinal))
+                    Err($"{path}.newFingerprint", "must be a sha256:-prefixed string");
+                else if (hasBaseFp && vNewFp == vBaseFp)
+                    Err($"{path}.newFingerprint", "no-op patch: newFingerprint equals baseFingerprint (spec §5.2.2)");
+                if (!TryString(p["diff"], out var vDiff))
+                    Err($"{path}.diff", "required string (the diff is the review surface)");
+                else
+                {
+                    try { VerifiedDiff.ParseStrict(vDiff); }
+                    catch (FormatException e) { Err($"{path}.diff", $"outside the verified-diff dialect: {e.Message}"); }
+                }
+                continue;
+            }
             CheckMembers(p, ["profile", "artifactId", "baseFingerprint", "newContent", "reviewDiff", "explanation"], path);
             if (!TryString(p["profile"], out var profile) || profile != "whole-artifact@0")
             {

@@ -82,4 +82,51 @@ public class FixtureTests
                 string.Join("; ", result.Errors.Select(e => $"{e.Path}: {e.Message}")));
         }
     }
+
+    [Fact]
+    public void BaseStateTighteningFixturesReproduce()
+    {
+        foreach (var vector in Load("base-state.json").EnumerateArray())
+        {
+            var name = vector.GetProperty("name").GetString();
+            var expectValid = vector.GetProperty("expect").GetString() == "valid";
+            var result = ChangesetValidator.Validate(JsonNode.Parse(vector.GetProperty("document").GetRawText()));
+            Assert.True(expectValid == result.Valid,
+                $"case: {name} — expected {(expectValid ? "valid" : "invalid")}, errors: " +
+                string.Join("; ", result.Errors.Select(e => $"{e.Path}: {e.Message}")));
+        }
+    }
+
+    [Fact]
+    public void VerifiedDiffDialectFixturesReproduce()
+    {
+        foreach (var vector in Load("verified-diff.json").EnumerateArray())
+        {
+            var name = vector.GetProperty("name").GetString();
+            var layer = vector.GetProperty("layer").GetString();
+            var expect = vector.GetProperty("expect").GetString();
+            var document = JsonNode.Parse(vector.GetProperty("document").GetRawText());
+            var structural = ChangesetValidator.Validate(document);
+            if (layer == "structural")
+            {
+                Assert.True((expect == "valid") == structural.Valid, $"case: {name} (structural)");
+                continue;
+            }
+            Assert.True(structural.Valid, $"case: {name} must be structurally valid — errors: " +
+                string.Join("; ", structural.Errors.Select(e => $"{e.Path}: {e.Message}")));
+            var patch = (JsonObject)JsonNode.Parse(vector.GetProperty("patch").GetRawText())!;
+            var baseContent = vector.GetProperty("base").GetString()!;
+            var result = VerifiedDiff.VerifyAgainstBase(patch, baseContent);
+            if (expect == "applies")
+            {
+                Assert.True(result.Ok, $"case: {name} must verify against base — errors: " +
+                    string.Join("; ", result.Errors.Select(e => $"{e.Path}: {e.Message}")));
+                Assert.Equal(vector.GetProperty("applied").GetString(), result.NewContent);
+            }
+            else
+            {
+                Assert.False(result.Ok, $"case: {name} must be rejected against base");
+            }
+        }
+    }
 }

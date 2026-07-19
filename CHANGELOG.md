@@ -37,6 +37,37 @@ are pre-1.0.
   executed against the packed package in CI (`readme-consumer-smoke`).
 
 ### Added
+- **SDK (.NET) 0.2.0**: spec 0.2 parity with the TypeScript SDK —
+  `VerifiedDiff` dialect engine (`Create` / `Apply` / `ParseStrict` /
+  `VerifyAgainstBase`), validator layer-1 verified-diff checks + `baseState`
+  structural validation + `BaseStateKinds`, builder
+  `AddVerifiedDiffPatch` with the same no-op refusal and specVersion lift.
+  Reproduces the TypeScript-generated `verified-diff.json` and
+  `base-state.json` corpora exactly (cross-SDK dialect agreement).
+- **SDK (TypeScript) 0.2.0**: spec 0.2 implementation — `verified-diff@0`
+  dialect engine (`createVerifiedDiff` / `applyVerifiedDiff` /
+  `parseVerifiedDiff`: exact line numbers, no fuzz, byte-faithful CR/LF,
+  EOF marker) with the layer-2 verifier `verifyAgainstBase`; `validate`
+  gains layer-1 verified-diff checks, `baseState` structural validation +
+  closed `kind` vocabulary (`BASE_STATE_KINDS`), and 0.2.0 in
+  `SUPPORTED_SPEC_VERSIONS`; builder gains `addVerifiedDiffPatch`
+  (derived diff + fingerprints, refuses no-ops, lifts the draft's
+  specVersion to 0.2.0 per §9 minimality). `artifactFingerprint` moved to
+  the fingerprint module (re-exported unchanged). New conformance corpora:
+  `verified-diff.json` (11 dialect cases — the 7 spec-required plus
+  multi-hunk, insert-at-start, EOF-state-change-only, delete-to-empty
+  hardening) + `base-state.json` (§4 tightening) — generated from the
+  reference implementation.
+- **Spec 0.2.0** (`spec/SPEC.md`): second UI patch profile `verified-diff@0` —
+  strict unified-diff dialect (exact line numbers, no fuzz, byte-faithful
+  newline handling with `\ No newline at end of file` marker), no-op
+  prohibition (≥1 hunk and `newFingerprint ≠ baseFingerprint`),
+  deterministic fail-closed application, and two-layer validation
+  (structural / base-supplied complete). Tightened `baseState`: structural
+  validation + closed `kind` vocabulary (`schema | ui-artifact |
+  changeset`) with the lineage (`changeset`) drift exemption codified.
+  Producer guidance: specVersion minimality (SHOULD). Migration notes in
+  SPEC.md §Changes from 0.1.0.
 - **.NET reference SDK** (`sdk/dotnet`, `Vivarium.Changeset`, net10.0):
   same surface as the TypeScript SDK — JCS canonicalization (ECMAScript
   number/string forms reimplemented over .NET), fingerprint (+ stamp /

@@ -4,10 +4,12 @@
  * and finalize() refuses to emit anything that does not validate.
  * There is no apply logic here and never will be.
  */
-import { createHash } from "node:crypto";
 import { createUnifiedDiff } from "./diff.ts";
-import { FINGERPRINT_PREFIX, stampFingerprint } from "./fingerprint.ts";
+import { createVerifiedDiff } from "./verified-diff.ts";
+import { artifactFingerprint, stampFingerprint } from "./fingerprint.ts";
 import { validate, SUPPORTED_SPEC_VERSIONS, type ValidationError } from "./validate.ts";
+
+export { artifactFingerprint } from "./fingerprint.ts";
 
 export interface BaseStateEntry { kind: string; ref: string; fingerprint: string }
 export interface ChangesetDraft {
@@ -25,9 +27,6 @@ export class ChangesetValidationError extends Error {
     this.errors = errors;
   }
 }
-
-export const artifactFingerprint = (content: string): string =>
-  FINGERPRINT_PREFIX + createHash("sha256").update(content, "utf8").digest("hex");
 
 export function createChangeset(init: {
   intent: string;
@@ -70,6 +69,37 @@ export function addUiPatch(
     explanation: patch.explanation,
   };
   return { ...draft, patches: { ...draft.patches, ui: [...draft.patches.ui, ui] } };
+}
+
+/**
+ * verified-diff@0 (spec §5.2.2): diff and both fingerprints are derived from
+ * the contents — by construction consistent. Refuses no-ops at authoring
+ * time. Adding one lifts the draft's specVersion to 0.2.0 (the lowest
+ * version the document now requires — spec §9 minimality, automated).
+ */
+export function addVerifiedDiffPatch(
+  draft: ChangesetDraft,
+  patch: { artifactId: string; baseContent: string; newContent: string; explanation: string }
+): ChangesetDraft {
+  const diff = createVerifiedDiff(patch.baseContent, patch.newContent);
+  if (diff === "") {
+    throw new ChangesetValidationError([
+      { path: "$.patches.ui", message: "no-op verified-diff patch: contents are identical (spec §5.2.2)" },
+    ]);
+  }
+  const ui = {
+    profile: "verified-diff@0",
+    artifactId: patch.artifactId,
+    baseFingerprint: artifactFingerprint(patch.baseContent),
+    diff,
+    newFingerprint: artifactFingerprint(patch.newContent),
+    explanation: patch.explanation,
+  };
+  return {
+    ...draft,
+    specVersion: "0.2.0",
+    patches: { ...draft.patches, ui: [...draft.patches.ui, ui] },
+  };
 }
 
 export function addDataPatch(

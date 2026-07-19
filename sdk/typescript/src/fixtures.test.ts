@@ -37,3 +37,30 @@ test("validation fixtures reproduce", async () => {
     assert.equal(validate(document).valid, expect === "valid", `case: ${name}`);
   }
 });
+
+test("base-state tightening fixtures reproduce (spec §4, 0.2)", async () => {
+  const { validate } = await import("./validate.ts");
+  for (const { name, expect, document } of load("base-state.json")) {
+    assert.equal(validate(document).valid, expect === "valid", `case: ${name}`);
+  }
+});
+
+test("verified-diff dialect fixtures reproduce (spec §5.2.2)", async () => {
+  const { validate } = await import("./validate.ts");
+  const { verifyAgainstBase } = await import("./verified-diff.ts");
+  for (const c of load("verified-diff.json")) {
+    const structuralValid = validate(c.document).valid;
+    if (c.layer === "structural") {
+      assert.equal(structuralValid, c.expect === "valid", `case: ${c.name} (structural)`);
+      continue;
+    }
+    assert.equal(structuralValid, true, `case: ${c.name} must be structurally valid`);
+    const result = verifyAgainstBase(c.patch, c.base);
+    if (c.expect === "applies") {
+      assert.ok(result.ok, `case: ${c.name} must verify against base`);
+      assert.equal(result.ok && result.newContent, c.applied, `case: ${c.name} applied content`);
+    } else {
+      assert.ok(!result.ok, `case: ${c.name} must be rejected against base`);
+    }
+  }
+});

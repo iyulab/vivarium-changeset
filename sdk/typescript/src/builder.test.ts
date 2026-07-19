@@ -51,3 +51,24 @@ test("builder is immutable — drafts can fork", () => {
   assert.equal(base.patches.data.length, 0);
   assert.equal(a.patches.data.length, 1);
 });
+
+test("verified-diff patch: derived, no-op-refusing, lifts specVersion to 0.2.0", async () => {
+  const { addVerifiedDiffPatch } = await import("./builder.ts");
+  let draft = start();
+  assert.equal(draft.specVersion, "0.1.0"); // minimality: starts at the floor
+  draft = addVerifiedDiffPatch(draft, {
+    artifactId: "screen-loans",
+    baseContent: "const title = \"Loans\";\n",
+    newContent: "const title = \"Active loans\";\n",
+    explanation: "rename title",
+  });
+  assert.equal(draft.specVersion, "0.2.0"); // lifted by the 0.2 feature
+  const doc = finalize(draft);
+  assert.equal(validate(doc).valid, true);
+  assert.equal(verifyFingerprint(doc), true);
+
+  assert.throws(
+    () => addVerifiedDiffPatch(start(), { artifactId: "x", baseContent: "same\n", newContent: "same\n", explanation: "noop" }),
+    ChangesetValidationError
+  );
+});
