@@ -1,8 +1,13 @@
 name: publish
 
-# 0.X release train: pushing a version tag (v0.1.1, ...) publishes the
-# TypeScript SDK to npm with provenance, then verifies it from the registry
-# as a fresh consumer. NPM_TOKEN is an org-level automation token.
+# 0.X release train: pushing a version tag (v0.1.1, ...) publishes both
+# reference SDKs — TypeScript to npm with provenance, .NET to NuGet — and then
+# verifies each from its registry as a fresh consumer. The two SDKs ship at the
+# same version by construction: both implement the same spec version, and their
+# fingerprints are byte-identical (shared conformance fixtures). Each job checks
+# its own manifest against the tag, so a version skew fails before publishing.
+# NPM_TOKEN is an org-level automation token; NUGET_API_KEY is a nuget.org key
+# scoped to the Vivarium.* prefix.
 on:
   push:
     tags: ["v*"]
@@ -46,3 +51,67 @@ jobs:
             sleep 10
           done
           node -e "import('@vivariumjs/changeset').then((m) => { if (!Object.keys(m).length) throw new Error('empty surface'); console.log('registry ok:', Object.keys(m).length, 'exports'); }).catch((e) => { console.error(e); process.exit(1); })"
+
+  nuget:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/dotnet
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Tag matches the project version
+        id: meta
+        run: |
+          v=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Vivarium.Changeset/Vivarium.Changeset.csproj)
+          if [ "v$v" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match project version $v" >&2
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Unit + conformance tests
+        run: dotnet test -c Release
+      - name: Pack
+        run: dotnet pack Vivarium.Changeset/Vivarium.Changeset.csproj -c Release -o "$RUNNER_TEMP/nupkg"
+        env:
+          ContinuousIntegrationBuild: "true"
+      - name: Push to nuget.org
+        run: |
+          dotnet nuget push "$RUNNER_TEMP/nupkg/*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ secrets.NUGET_API_KEY }}"
+      # Symmetric with the npm job: prove the published artifact is consumable
+      # from the registry, not just that the push returned 200. The index takes
+      # a few minutes to serve a new version, hence the retry.
+      - name: Verify the published package from the registry
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir consumer && cd consumer
+          cat > consumer.csproj <<EOF
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <OutputType>Exe</OutputType>
+              <TargetFramework>net10.0</TargetFramework>
+              <Nullable>enable</Nullable>
+              <ImplicitUsings>enable</ImplicitUsings>
+            </PropertyGroup>
+            <ItemGroup>
+              <PackageReference Include="Vivarium.Changeset" Version="${{ steps.meta.outputs.version }}" />
+            </ItemGroup>
+          </Project>
+          EOF
+          cat > Program.cs <<'EOF'
+          using Vivarium.Changeset;
+          Console.WriteLine("registry ok: " + typeof(ChangesetValidator).FullName);
+          EOF
+          # --packages isolates the global-packages folder so a cached copy can
+          # never stand in for the registry artifact this step exists to check.
+          for i in $(seq 1 30); do
+            dotnet restore --no-cache --packages "$RUNNER_TEMP/consumer-pkgs" && break
+            sleep 20
+          done
+          dotnet run --project . --no-restore

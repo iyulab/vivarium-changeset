@@ -10,8 +10,28 @@
     <RepositoryUrl>https://github.com/iyulab/vivarium-changeset</RepositoryUrl>
   </PropertyGroup>
 
+  <!-- Package identity. The spec version and the package version move together in
+       the 0.x line: a package claiming 0.1.0 implements spec 0.1.0, and fingerprints
+       are byte-identical with @vivariumjs/changeset at the same version. -->
+  <PropertyGroup>
+    <PackageId>Vivarium.Changeset</PackageId>
+    <Authors>iyulab</Authors>
+    <PackageProjectUrl>https://github.com/iyulab/vivarium-changeset</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>changeset;schema;fingerprint;jcs;rfc8785;diff;spec</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Vivarium.Changeset.Tests" />
+    <!-- ..\README.md is the SDK's own readme — one source, shown both in the repo
+         and on nuget.org (its links are absolute for that reason). -->
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
