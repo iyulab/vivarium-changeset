@@ -11,6 +11,15 @@ are pre-1.0.
 > with the SDK changes below included; the `v0.1.0` git tag predates them
 > (it tagged the spec). The npm scope is `@vivariumjs` — the `@vivarium`
 > org name was already taken on npm.
+>
+> The first NuGet publish (`Vivarium.Changeset 0.1.0`, 2026-07-19) shipped
+> the same SDK content, verified consumable from the registry. Release tags
+> now name their artifact — `ts-v*` for npm, `dotnet-v*` for NuGet — because
+> a single tag coupled the two registries: a packaging-only change to one SDK
+> forced a no-op republish of the other (the .NET publish was blocked by npm
+> 409 on the already-published 0.1.0). The SDKs still conform to one spec
+> version with byte-identical fingerprints; that invariant is enforced by the
+> shared fixture corpus on every push, not by shipping them together.
 
 ### Changed
 - SDK (TypeScript): the package now ships built JavaScript — `exports`
