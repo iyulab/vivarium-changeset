@@ -81,6 +81,15 @@ are pre-1.0.
   cross-SDK fingerprint agreement.
 
 ### Fixed
+- **Publish workflow**: both registry jobs are now rerun-safe and fail
+  with actionable messages. npm publish skips when the version is already
+  live (a rerun after a flaky verification died on "cannot publish over
+  previously published versions" — observed on ts-v0.2.0); NuGet push
+  gains `--skip-duplicate`. The registry verification loops fail
+  explicitly on exhaustion instead of falling through to a confusing
+  module-not-found, the npm loop uses `--prefer-online` so the runner's
+  cache cannot re-serve an earlier 404 packument, and the npm retry
+  window grows to ~10 minutes to cover observed propagation lag.
 - SDK (TypeScript): `validate` now returns validation errors instead of
   throwing on malformed shapes — non-array facets, non-object patch /
   approval / operation items, and non-array `entity.create` fields

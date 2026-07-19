@@ -48,18 +48,37 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm test
-      - run: npm publish --access public --provenance
+      # Idempotent: a rerun of this job (e.g. after a flaky verification step)
+      # must not die on "cannot publish over previously published versions" —
+      # observed on ts-v0.2.0, where the publish had succeeded and only the
+      # verification below needed another pass.
+      - name: Publish to npm (skip if the version is already live)
+        run: |
+          if npm view "@vivariumjs/changeset@${{ steps.meta.outputs.version }}" version >/dev/null 2>&1; then
+            echo "version ${{ steps.meta.outputs.version }} already on the registry — skipping publish (rerun-safe); verification below still runs"
+          else
+            npm publish --access public --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Registry propagation can exceed several minutes; --prefer-online keeps
+      # the runner's npm cache from re-serving an earlier 404 packument, and an
+      # exhausted loop fails HERE with a propagation message instead of falling
+      # through to a confusing module-not-found (observed on ts-v0.2.0).
       - name: Verify the published package from the registry
         working-directory: ${{ runner.temp }}
         run: |
           mkdir consumer && cd consumer
           echo '{"name":"consumer","private":true,"type":"module"}' > package.json
-          for i in $(seq 1 30); do
-            npm install --no-audit --no-fund "@vivariumjs/changeset@${{ steps.meta.outputs.version }}" && break
-            sleep 10
+          ok=0
+          for i in $(seq 1 40); do
+            if npm install --no-audit --no-fund --prefer-online "@vivariumjs/changeset@${{ steps.meta.outputs.version }}"; then ok=1; break; fi
+            sleep 15
           done
+          if [ "$ok" != 1 ]; then
+            echo "registry did not serve @vivariumjs/changeset@${{ steps.meta.outputs.version }} within the retry window (propagation lag?) — rerun this job once it is visible" >&2
+            exit 1
+          fi
           node -e "import('@vivariumjs/changeset').then((m) => { if (!Object.keys(m).length) throw new Error('empty surface'); console.log('registry ok:', Object.keys(m).length, 'exports'); }).catch((e) => { console.error(e); process.exit(1); })"
 
   nuget:
@@ -90,11 +109,14 @@ jobs:
         run: dotnet pack Vivarium.Changeset/Vivarium.Changeset.csproj -c Release -o "$RUNNER_TEMP/nupkg"
         env:
           ContinuousIntegrationBuild: "true"
+      # --skip-duplicate makes a rerun of this job safe: an already-published
+      # version is a warning, not a failure (mirrors the npm job's idempotence).
       - name: Push to nuget.org
         run: |
           dotnet nuget push "$RUNNER_TEMP/nupkg/*.nupkg" \
             --source https://api.nuget.org/v3/index.json \
-            --api-key "${{ secrets.NUGET_API_KEY }}"
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --skip-duplicate
       # Symmetric with the npm job: prove the published artifact is consumable
       # from the registry, not just that the push returned 200. The index takes
       # a few minutes to serve a new version, hence the retry.
@@ -121,8 +143,13 @@ jobs:
           EOF
           # --packages isolates the global-packages folder so a cached copy can
           # never stand in for the registry artifact this step exists to check.
+          ok=0
           for i in $(seq 1 30); do
-            dotnet restore --no-cache --packages "$RUNNER_TEMP/consumer-pkgs" && break
+            if dotnet restore --no-cache --packages "$RUNNER_TEMP/consumer-pkgs"; then ok=1; break; fi
             sleep 20
           done
+          if [ "$ok" != 1 ]; then
+            echo "nuget.org did not serve Vivarium.Changeset ${{ steps.meta.outputs.version }} within the retry window — rerun this job once it is indexed" >&2
+            exit 1
+          fi
           dotnet run --project . --no-restore
