@@ -1,19 +1,29 @@
 name: publish
 
-# 0.X release train: pushing a version tag (v0.1.1, ...) publishes both
-# reference SDKs — TypeScript to npm with provenance, .NET to NuGet — and then
-# verifies each from its registry as a fresh consumer. The two SDKs ship at the
-# same version by construction: both implement the same spec version, and their
-# fingerprints are byte-identical (shared conformance fixtures). Each job checks
-# its own manifest against the tag, so a version skew fails before publishing.
+# 0.X release train. This repo ships two reference SDKs to two registries, and
+# they release on independent cadences — a packaging-only fix to one must not
+# force a no-op republish of the other. So the tag names its artifact:
+#
+#   ts-v0.1.1      → npm      @vivariumjs/changeset
+#   dotnet-v0.1.0  → NuGet    Vivarium.Changeset
+#
+# (The legacy `v0.1.0` tag predates this scheme and is left where it is.)
+#
+# The SDKs still conform to one spec version and produce byte-identical
+# fingerprints — that is a property of the shared conformance fixtures, enforced
+# by the test workflow on every push, not something publish events need to
+# couple. Each job checks its own manifest against the tag, so a version skew
+# fails before publishing.
+#
 # NPM_TOKEN is an org-level automation token; NUGET_API_KEY is a nuget.org key
 # scoped to the Vivarium.* prefix.
 on:
   push:
-    tags: ["v*"]
+    tags: ["ts-v*", "dotnet-v*"]
 
 jobs:
   npm:
+    if: startsWith(github.ref_name, 'ts-v')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,7 +41,7 @@ jobs:
         id: meta
         run: |
           v=$(node -p "require('./package.json').version")
-          if [ "v$v" != "$GITHUB_REF_NAME" ]; then
+          if [ "ts-v$v" != "$GITHUB_REF_NAME" ]; then
             echo "tag $GITHUB_REF_NAME does not match package version $v" >&2
             exit 1
           fi
@@ -53,6 +63,7 @@ jobs:
           node -e "import('@vivariumjs/changeset').then((m) => { if (!Object.keys(m).length) throw new Error('empty surface'); console.log('registry ok:', Object.keys(m).length, 'exports'); }).catch((e) => { console.error(e); process.exit(1); })"
 
   nuget:
+    if: startsWith(github.ref_name, 'dotnet-v')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -68,7 +79,7 @@ jobs:
         id: meta
         run: |
           v=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Vivarium.Changeset/Vivarium.Changeset.csproj)
-          if [ "v$v" != "$GITHUB_REF_NAME" ]; then
+          if [ "dotnet-v$v" != "$GITHUB_REF_NAME" ]; then
             echo "tag $GITHUB_REF_NAME does not match project version $v" >&2
             exit 1
           fi
