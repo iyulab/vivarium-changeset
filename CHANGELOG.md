@@ -5,8 +5,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) ·
 versioning: the spec and the reference SDKs version together while both
 are pre-1.0.
 
-## [Unreleased]
+## [0.2.0] — 2026-07-19
 
+> Published as `@vivariumjs/changeset@0.2.0` (npm) and
+> `Vivarium.Changeset 0.2.0` (NuGet), tags `ts-v0.2.0` / `dotnet-v0.2.0`.
+> Spec 0.2.0 is normative; both SDKs conform to it with byte-identical
+> fingerprints.
+>
 > The first npm publish (`@vivariumjs/changeset@0.1.0`, 2026-07-17) shipped
 > with the SDK changes below included; the `v0.1.0` git tag predates them
 > (it tagged the spec). The npm scope is `@vivariumjs` — the `@vivarium`

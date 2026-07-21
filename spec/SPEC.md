@@ -1,7 +1,10 @@
 # Vivarium Changeset Specification
 
-**Version: 0.2.0** · Status: normative (0.1.0 tagged 2026-07-16; 0.2.0 pending
-tag — differences from 0.1.0 are listed in [Changes from 0.1.0](#changes-from-010)).
+**Version: 0.2.0** · Status: normative — shipped in both reference SDKs
+(`ts-v0.2.0` / `dotnet-v0.2.0`, 2026-07-19). The spec carries no separate
+0.2.0 tag: release tags now name their artifact, because one shared tag
+coupled the two registries. Differences from 0.1.0 (tagged 2026-07-16) are
+listed in [Changes from 0.1.0](#changes-from-010).
 
 The key words MUST, MUST NOT, SHOULD, MAY are to be interpreted as in RFC 2119.
 
