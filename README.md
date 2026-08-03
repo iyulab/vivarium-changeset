@@ -26,6 +26,11 @@ The changeset is that unit. It is the lingua franca of the Vivarium family — t
 - **Reference SDKs.** Libraries (initially .NET and TypeScript) for constructing, parsing, validating, diffing, and fingerprinting changesets. SDKs contain *no* apply logic.
 - **Conformance fixtures.** A shared test corpus any independent implementation can validate against.
 
+**Supported Node** (TypeScript SDK): the package declares `engines.node >= 20`, and CI
+runs a fresh consumer install on that floor every build — the floor is executed, not just
+claimed. It is a *supported* floor, not a recommendation: Node 20 reached end-of-life on
+2026-04-30, so an actively supported release line is the better choice for new work.
+
 ## What a changeset is
 
 Conceptually, a changeset bundles three kinds of patch under one version and one fingerprint:
