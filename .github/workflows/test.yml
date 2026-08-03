@@ -65,3 +65,49 @@ jobs:
         run: node tools/verify-readme-examples.ts typescript
       - name: .NET README examples as a fresh project consumer
         run: node tools/verify-readme-examples.ts dotnet
+
+  # ── engines.node floor, executed ─────────────────────────────────────────
+  # `engines.node` is a promise to consumers, and nothing was running it: every
+  # job pinned the current release, so the declared floor was a claim no CI step
+  # could falsify. Pack on current, install and import on the floor itself.
+  engines-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: The pinned floor still matches engines.node
+        working-directory: sdk/typescript
+        run: |
+          declared=$(node -p "require('./package.json').engines.node")
+          if [ "$declared" != ">=20" ]; then
+            echo "engines.node is '$declared' but this job runs 20; change both together" >&2
+            exit 1
+          fi
+      - name: Pack the SDK as consumers receive it
+        working-directory: sdk/typescript
+        run: |
+          npm ci
+          npm run build
+          npm pack --pack-destination "$RUNNER_TEMP"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: A fresh consumer builds a changeset on Node 20
+        run: |
+          node --version
+          mkdir "$RUNNER_TEMP/floor" && cd "$RUNNER_TEMP/floor"
+          echo '{"name":"floor","private":true,"type":"module"}' > package.json
+          npm install --no-audit --no-fund "$RUNNER_TEMP"/vivariumjs-changeset-*.tgz
+          node -e "
+            import('@vivariumjs/changeset').then((m) => {
+              const draft = m.addUiPatch(
+                m.createChangeset({ intent: 'floor probe', producedBy: 'ci', createdAt: new Date().toISOString() }),
+                { artifactId: 'a', baseContent: null, newContent: 'x', explanation: 'e' },
+              );
+              const doc = m.finalize(draft);
+              if (!String(doc.fingerprint).startsWith('sha256:')) throw new Error('no fingerprint on the declared floor');
+              console.log('floor ok —', doc.fingerprint.slice(0, 20));
+            }).catch((e) => { console.error(e); process.exit(1); })
+          "
