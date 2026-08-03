@@ -68,6 +68,13 @@ Still deliberately undecided:
 
 ## Relationship to the Vivarium family
 
+A running instance of the family — propose, preview, approve, apply, roll back — is
+browsable as a gallery of archived runs: [vivarium-gallery](https://github.com/iyulab/vivarium-gallery)
+([live](https://iyulab.github.io/vivarium-gallery/)). Each exhibit keeps the final artifacts, the
+turn ledger and the rollback record of an actual run, so the claims above can be checked
+rather than taken on faith.
+
+
 `vivarium-changeset` is the family's dependency root. [`vivarium-agent`](https://github.com/iyulab/vivarium-agent) emits changesets; [`vivarium-stage`](https://github.com/iyulab/vivarium-stage) previews and applies them; [`vivarium`](https://github.com/iyulab/vivarium) exchanges UI patches through them. Horizontal dependencies between the other repos are forbidden — if two of them need to talk, the vocabulary they use is defined here.
 
 Standalone use is a first-class scenario: any system that wants "reviewable, fingerprint-gated application change" can adopt the format without adopting anything else from the family.
