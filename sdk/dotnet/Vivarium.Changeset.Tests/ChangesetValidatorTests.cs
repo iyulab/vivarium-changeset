@@ -173,6 +173,81 @@ public class ChangesetValidatorTests
         Assert.Contains("$.patches.data[0].operations[0].op", Paths(ChangesetValidator.Validate(doc)));
     }
 
+    private static JsonObject WithDataOperation(string operationJson)
+    {
+        var doc = Valid();
+        ((JsonObject)doc["patches"]!)["data"] = new JsonArray(new JsonObject
+        {
+            ["id"] = "p1",
+            ["explanation"] = "e",
+            ["operations"] = new JsonArray(JsonNode.Parse(operationJson)!),
+        });
+        return doc;
+    }
+
+    // spec §5.3 — per-op required members, closed member set, closed `where`.
+    [Theory]
+    [InlineData("""{ "op": "update", "entity": "loan" }""", "$.patches.data[0].operations[0].where")]
+    [InlineData("""{ "op": "update", "entity": "loan" }""", "$.patches.data[0].operations[0].set")]
+    [InlineData("""{ "op": "insert", "values": {} }""", "$.patches.data[0].operations[0].entity")]
+    [InlineData("""{ "op": "delete", "entity": "" , "where": { "field": "f", "equals": 1 } }""", "$.patches.data[0].operations[0].entity")]
+    [InlineData("""{ "op": "insert", "entity": "loan", "values": {}, "limit": 1 }""", "$.patches.data[0].operations[0].limit")]
+    [InlineData("""{ "op": "insert", "entity": "loan", "values": "not-an-object" }""", "$.patches.data[0].operations[0].values")]
+    [InlineData("""{ "op": "update", "entity": "loan", "where": { "field": "f", "equals": 1 }, "set": 7 }""", "$.patches.data[0].operations[0].set")]
+    [InlineData("""{ "op": "delete", "entity": "loan", "where": { "sku": "SKU-1" } }""", "$.patches.data[0].operations[0].where.sku")]
+    [InlineData("""{ "op": "delete", "entity": "loan", "where": { "field": "f", "equals": [1] } }""", "$.patches.data[0].operations[0].where.equals")]
+    [InlineData("""{ "op": "delete", "entity": "loan", "where": { "field": "" , "equals": 1 } }""", "$.patches.data[0].operations[0].where.field")]
+    [InlineData("""{ "op": "delete", "entity": "loan", "where": "sku = 1" }""", "$.patches.data[0].operations[0].where")]
+    public void MalformedDataOperationIsRejected(string operationJson, string expectedPath)
+    {
+        Assert.Contains(expectedPath, Paths(ChangesetValidator.Validate(WithDataOperation(operationJson))));
+    }
+
+    [Theory]
+    [InlineData("""{ "op": "insert", "entity": "loan", "values": { "amount": 1 } }""")]
+    [InlineData("""{ "op": "update", "entity": "loan", "where": { "field": "f", "equals": null }, "set": { "amount": 1 } }""")]
+    [InlineData("""{ "op": "delete", "entity": "loan", "where": { "field": "f", "equals": true } }""")]
+    public void ConformingDataOperationIsAccepted(string operationJson)
+    {
+        Assert.True(ChangesetValidator.Validate(WithDataOperation(operationJson)).Valid);
+    }
+
+    [Fact]
+    public void DataBaseStateKindRequires030()
+    {
+        var doc = Valid();
+        ((JsonArray)doc["provenance"]!["baseState"]!).Add(new JsonObject
+        {
+            ["kind"] = "data",
+            ["ref"] = "data",
+            ["fingerprint"] = "sha256:" + new string('d', 64),
+        });
+        var index = ((JsonArray)doc["provenance"]!["baseState"]!).Count - 1;
+
+        doc["specVersion"] = "0.2.0";
+        Assert.Contains($"$.provenance.baseState[{index}].kind", Paths(ChangesetValidator.Validate(doc)));
+
+        doc["specVersion"] = "0.3.0";
+        Assert.True(ChangesetValidator.Validate(doc).Valid);
+    }
+
+    [Fact]
+    public void VerifiedDiffProfileIsStillAllowedAbove020()
+    {
+        var doc = Valid();
+        doc["specVersion"] = "0.3.0";
+        ((JsonObject)doc["patches"]!)["ui"] = new JsonArray(new JsonObject
+        {
+            ["profile"] = "verified-diff@0",
+            ["artifactId"] = "screen-1",
+            ["baseFingerprint"] = "sha256:" + new string('a', 64),
+            ["diff"] = "@@ -1,1 +1,1 @@\n-old\n+new\n",
+            ["newFingerprint"] = "sha256:" + new string('b', 64),
+            ["explanation"] = "edit",
+        });
+        Assert.True(ChangesetValidator.Validate(doc).Valid);
+    }
+
     [Fact]
     public void EmbeddedFingerprintMismatchIsRejected()
     {

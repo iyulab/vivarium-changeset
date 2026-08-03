@@ -28,6 +28,20 @@ export class ChangesetValidationError extends Error {
   }
 }
 
+/**
+ * Spec §9 minimality, automated: a draft carries the *lowest* specVersion its
+ * contents require. Features raise the floor and never lower it — a draft that
+ * already needs 0.3 does not fall back to 0.2 when a 0.2 feature is added.
+ */
+function lift(current: string, required: string): string {
+  return SUPPORTED_SPEC_VERSIONS.indexOf(required) > SUPPORTED_SPEC_VERSIONS.indexOf(current) ? required : current;
+}
+
+/** The floor a baseState imposes: `data` entries are a 0.3 feature (spec §4). */
+function baseStateFloor(baseState: BaseStateEntry[]): string {
+  return baseState.some((e) => e.kind === "data") ? "0.3.0" : SUPPORTED_SPEC_VERSIONS[0];
+}
+
 export function createChangeset(init: {
   intent: string;
   producedBy: string;
@@ -37,7 +51,7 @@ export function createChangeset(init: {
   editContext?: unknown;
 }): ChangesetDraft {
   return {
-    specVersion: SUPPORTED_SPEC_VERSIONS[0],
+    specVersion: baseStateFloor(init.baseState ?? []),
     ...(init.id !== undefined ? { id: init.id } : {}),
     intent: init.intent,
     provenance: {
@@ -74,8 +88,8 @@ export function addUiPatch(
 /**
  * verified-diff@0 (spec §5.2.2): diff and both fingerprints are derived from
  * the contents — by construction consistent. Refuses no-ops at authoring
- * time. Adding one lifts the draft's specVersion to 0.2.0 (the lowest
- * version the document now requires — spec §9 minimality, automated).
+ * time. Adding one raises the draft's specVersion to at least 0.2.0 (the
+ * lowest version the document now requires — spec §9 minimality, automated).
  */
 export function addVerifiedDiffPatch(
   draft: ChangesetDraft,
@@ -97,7 +111,7 @@ export function addVerifiedDiffPatch(
   };
   return {
     ...draft,
-    specVersion: "0.2.0",
+    specVersion: lift(draft.specVersion, "0.2.0"),
     patches: { ...draft.patches, ui: [...draft.patches.ui, ui] },
   };
 }

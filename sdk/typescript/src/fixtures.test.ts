@@ -45,6 +45,13 @@ test("base-state tightening fixtures reproduce (spec §4, 0.2)", async () => {
   }
 });
 
+test("data patch fixtures reproduce (spec §5.3 + §4 data kind, 0.3)", async () => {
+  const { validate } = await import("./validate.ts");
+  for (const { name, expect, document } of load("data-patch.json")) {
+    assert.equal(validate(document).valid, expect === "valid", `case: ${name}`);
+  }
+});
+
 test("verified-diff dialect fixtures reproduce (spec §5.2.2)", async () => {
   const { validate } = await import("./validate.ts");
   const { verifyAgainstBase } = await import("./verified-diff.ts");

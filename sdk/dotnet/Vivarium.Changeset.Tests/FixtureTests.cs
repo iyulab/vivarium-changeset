@@ -98,6 +98,20 @@ public class FixtureTests
     }
 
     [Fact]
+    public void DataPatchFixturesReproduce()
+    {
+        foreach (var vector in Load("data-patch.json").EnumerateArray())
+        {
+            var name = vector.GetProperty("name").GetString();
+            var expectValid = vector.GetProperty("expect").GetString() == "valid";
+            var result = ChangesetValidator.Validate(JsonNode.Parse(vector.GetProperty("document").GetRawText()));
+            Assert.True(expectValid == result.Valid,
+                $"case: {name} — expected {(expectValid ? "valid" : "invalid")}, errors: " +
+                string.Join("; ", result.Errors.Select(e => $"{e.Path}: {e.Message}")));
+        }
+    }
+
+    [Fact]
     public void VerifiedDiffDialectFixturesReproduce()
     {
         foreach (var vector in Load("verified-diff.json").EnumerateArray())

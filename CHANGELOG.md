@@ -5,6 +5,42 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) ·
 versioning: the spec and the reference SDKs version together while both
 are pre-1.0.
 
+## [0.3.0] — unreleased
+
+> Spec 0.3.0 with both reference SDKs at 0.3.0. Tags `ts-v0.3.0` / `dotnet-v0.3.0`.
+
+### Added
+- **Spec §4 — `baseState.kind: "data"`**, symmetric with `schema`. A changeset that
+  changes data can now declare the data state it was authored against; before this it
+  could not, so a drift-detecting consumer had nothing to check and applied stale
+  data proposals without complaint. Gated on `specVersion` 0.3.0.
+- **Spec §5.3 — normative prose.** The section defined data operations by example only.
+  It now states the per-`op` required members, the closed `where` form, and the
+  literal-only rule the example implied.
+- **SDKs — `data` base entries raise the draft's `specVersion` to 0.3.0** at authoring
+  time, the same §9 minimality automation `verified-diff@0` already had.
+- **Conformance corpus — `spec/fixtures/data-patch.json`**, 12 vectors both SDKs run.
+- **Spec — open item O-4**: finer `data` fingerprint granularity (per-entity, per-row).
+  0.3 fingerprints the facet as a whole.
+
+### Changed
+- **Tightened — data operation bodies (spec §5.3).** `op` was the only member the
+  validators checked; `entity`, `where`, `set`, and `values` were unvalidated, so a
+  malformed data patch passed validation, sealed into the fingerprint, and failed
+  later inside a backend write path. Operations now carry exactly their `op`'s members,
+  and `where` is closed to `{ field, equals: <literal> }`. The schema facet has always
+  been validated this way — one document should not hold two standards of rigor.
+  **Migration**: documents whose data operations use another shape are now invalid at
+  every supported `specVersion`. A tightening describes what was always malformed, so
+  it is not version-gated.
+
+### Fixed
+- **SDKs — adding a `verified-diff@0` patch no longer lowers a draft's `specVersion`.**
+  It assigned `0.2.0` outright rather than raising a floor; on a draft that already
+  required more, the stamp would fall below what the document needs. Version gates are
+  now floors on both the authoring and the validating side (`verified-diff@0` requires
+  0.2.0 *or later*).
+
 ## [0.2.0] — 2026-07-19
 
 > Published as `@vivariumjs/changeset@0.2.0` (npm) and

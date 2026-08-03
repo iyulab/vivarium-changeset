@@ -72,3 +72,42 @@ test("verified-diff patch: derived, no-op-refusing, lifts specVersion to 0.2.0",
     ChangesetValidationError
   );
 });
+
+test("a data baseState entry lifts specVersion to 0.3.0, and 0.2 features never lower it", async () => {
+  const { addVerifiedDiffPatch } = await import("./builder.ts");
+  let draft = createChangeset({
+    intent: "Prune stale rows",
+    producedBy: "test-suite",
+    createdAt: "2026-08-03T00:00:00Z",
+    baseState: [{ kind: "data", ref: "data", fingerprint: "sha256:" + "d".repeat(64) }],
+  });
+  assert.equal(draft.specVersion, "0.3.0");
+  draft = addVerifiedDiffPatch(draft, {
+    artifactId: "screen-loans",
+    baseContent: "const title = \"Loans\";\n",
+    newContent: "const title = \"Active loans\";\n",
+    explanation: "rename title",
+  });
+  assert.equal(draft.specVersion, "0.3.0"); // a 0.2 feature must not pull the stamp down
+  const doc = finalize(draft);
+  assert.equal(validate(doc).valid, true);
+});
+
+test("an incomplete data operation is refused at authoring time (spec §5.3)", () => {
+  // Before spec 0.3 this finalized cleanly — `op` was the only member validated,
+  // so an update with no predicate and no assignment reached a backend write path.
+  const draft = addDataPatch(start(), {
+    id: "backfill",
+    explanation: "seed defaults",
+    operations: [{ op: "update", entity: "loan" }],
+  });
+  try {
+    finalize(draft);
+    assert.fail("finalize must refuse an incomplete data operation");
+  } catch (e) {
+    assert.ok(e instanceof ChangesetValidationError);
+    const paths = e.errors.map((x) => x.path);
+    assert.ok(paths.includes("$.patches.data[0].operations[0].where"));
+    assert.ok(paths.includes("$.patches.data[0].operations[0].set"));
+  }
+});

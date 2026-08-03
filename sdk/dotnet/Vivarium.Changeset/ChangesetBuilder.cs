@@ -25,6 +25,19 @@ public sealed class ChangesetBuilder
 {
     private readonly JsonObject _draft;
 
+    /// <summary>
+    /// Spec §9 minimality, automated: a draft carries the <em>lowest</em> specVersion its
+    /// contents require. Features raise the floor and never lower it — a draft that already
+    /// needs 0.3 does not fall back to 0.2 when a 0.2 feature is added.
+    /// </summary>
+    private void Lift(string required)
+    {
+        var versions = ChangesetValidator.SupportedSpecVersions;
+        var current = _draft["specVersion"]!.GetValue<string>();
+        if (Array.IndexOf(versions, required) > Array.IndexOf(versions, current))
+            _draft["specVersion"] = required;
+    }
+
     /// <param name="createdAt">Caller supplies the clock — the SDK stays deterministic.</param>
     public ChangesetBuilder(
         string intent,
@@ -34,12 +47,13 @@ public sealed class ChangesetBuilder
         IEnumerable<BaseStateEntry>? baseState = null,
         JsonNode? editContext = null)
     {
+        var entries = (baseState ?? []).ToArray();
         var provenance = new JsonObject
         {
             ["producedBy"] = producedBy,
             ["createdAt"] = createdAt,
             ["baseState"] = new JsonArray(
-                (baseState ?? []).Select(b => (JsonNode)new JsonObject
+                entries.Select(b => (JsonNode)new JsonObject
                 {
                     ["kind"] = b.Kind,
                     ["ref"] = b.Ref,
@@ -61,6 +75,9 @@ public sealed class ChangesetBuilder
             ["ui"] = new JsonArray(),
             ["data"] = new JsonArray(),
         };
+
+        // `data` baseState entries are a 0.3 feature (spec §4).
+        if (entries.Any(b => b.Kind == "data")) Lift("0.3.0");
     }
 
     private JsonArray FacetArray(string name) => (JsonArray)((JsonObject)_draft["patches"]!)[name]!;
@@ -90,9 +107,9 @@ public sealed class ChangesetBuilder
     /// <summary>
     /// verified-diff@0 (spec §5.2.2): diff and both fingerprints are derived
     /// from the contents — by construction consistent. Refuses no-ops at
-    /// authoring time. Adding one lifts the draft's specVersion to 0.2.0
-    /// (the lowest version the document now requires — spec §9 minimality,
-    /// automated).
+    /// authoring time. Adding one raises the draft's specVersion to at least
+    /// 0.2.0 (the lowest version the document now requires — spec §9
+    /// minimality, automated).
     /// </summary>
     public ChangesetBuilder AddVerifiedDiffPatch(string artifactId, string baseContent, string newContent, string explanation)
     {
@@ -109,7 +126,7 @@ public sealed class ChangesetBuilder
             ["newFingerprint"] = ChangesetFingerprint.OfArtifact(newContent),
             ["explanation"] = explanation,
         });
-        _draft["specVersion"] = "0.2.0";
+        Lift("0.2.0");
         return this;
     }
 

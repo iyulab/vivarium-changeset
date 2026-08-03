@@ -5,10 +5,10 @@ import { parseVerifiedDiff } from "./verified-diff.ts";
 export interface ValidationError { path: string; message: string }
 export interface ValidationResult { valid: boolean; errors: ValidationError[] }
 
-export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0"];
+export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0", "0.3.0"];
 
-/** Closed `baseState.kind` vocabulary (spec §4, 0.2). */
-export const BASE_STATE_KINDS = ["schema", "ui-artifact", "changeset"];
+/** Closed `baseState.kind` vocabulary (spec §4). `data` is gated on 0.3.0. */
+export const BASE_STATE_KINDS = ["schema", "ui-artifact", "changeset", "data"];
 
 const SCHEMA_OPS: Record<string, string[]> = {
   "entity.create": ["op", "entity", "fields", "explanation"],
@@ -22,7 +22,12 @@ const SCHEMA_OPS: Record<string, string[]> = {
   "constraint.remove": ["op", "entity", "constraint", "explanation"],
 };
 const LOGICAL_TYPES = ["string", "number", "boolean", "date", "datetime", "reference", "json"];
-const DATA_OPS = ["insert", "update", "delete"];
+/** Per-operation required members (spec §5.3) — the data facet's counterpart to SCHEMA_OPS. */
+const DATA_OPS: Record<string, string[]> = {
+  insert: ["op", "entity", "values"],
+  update: ["op", "entity", "where", "set"],
+  delete: ["op", "entity", "where"],
+};
 
 /**
  * Layer-1 structural validation of a parsed changeset document (spec §8).
@@ -49,6 +54,10 @@ export function validate(document: unknown): ValidationResult {
   if (!SUPPORTED_SPEC_VERSIONS.includes(doc.specVersion as string)) {
     err("$.specVersion", `unsupported specVersion: ${String(doc.specVersion)}`);
   }
+  // SUPPORTED_SPEC_VERSIONS is ordered ascending, so position is precedence.
+  // Version-gated *features* use this (spec §9); tightenings never do.
+  const declared = SUPPORTED_SPEC_VERSIONS.indexOf(doc.specVersion as string);
+  const atLeast = (v: string) => declared >= 0 && declared >= SUPPORTED_SPEC_VERSIONS.indexOf(v);
   if (typeof doc.intent !== "string" || doc.intent.trim() === "") {
     err("$.intent", "intent is required and must be a non-empty string");
   }
@@ -71,6 +80,8 @@ export function validate(document: unknown): ValidationResult {
       checkMembers(e, ["kind", "ref", "fingerprint"], path);
       if (!BASE_STATE_KINDS.includes(e.kind as string)) {
         err(`${path}.kind`, `unknown baseState kind: ${String(e.kind)} (closed vocabulary, spec §4)`);
+      } else if (e.kind === "data" && !atLeast("0.3.0")) {
+        err(`${path}.kind`, `baseState kind "data" requires specVersion 0.3.0 or later (document declares ${String(doc.specVersion)})`);
       }
       if (typeof e.ref !== "string" || e.ref === "") err(`${path}.ref`, "required non-empty string");
       if (typeof e.fingerprint !== "string" || !e.fingerprint.startsWith(FINGERPRINT_PREFIX)) {
@@ -105,6 +116,19 @@ export function validate(document: unknown): ValidationResult {
   const isRecord = (v: unknown): v is Record<string, unknown> =>
     typeof v === "object" && v !== null && !Array.isArray(v);
 
+  /** `where` is closed to `{ field, equals: <literal> }` — spec §5.3, no expressions. */
+  const checkWhere = (where: unknown, path: string) => {
+    if (!isRecord(where)) { err(path, "must be an object { field, equals } (spec §5.3)"); return; }
+    checkMembers(where, ["field", "equals"], path);
+    if (typeof where.field !== "string" || where.field === "") err(`${path}.field`, "required non-empty string");
+    if (!("equals" in where)) err(`${path}.equals`, "required member missing");
+    else {
+      const v = where.equals;
+      const isLiteral = v === null || ["string", "number", "boolean"].includes(typeof v);
+      if (!isLiteral) err(`${path}.equals`, "must be a literal — string, number, boolean, or null (spec §5.3, v0 keeps expressions out)");
+    }
+  };
+
   schema.forEach((p, i) => {
     const path = `$.patches.schema[${i}]`;
     if (!isRecord(p)) { err(path, "must be an object"); return; }
@@ -128,14 +152,12 @@ export function validate(document: unknown): ValidationResult {
     }
   });
 
-  const is02 = doc.specVersion === "0.2.0";
-
   ui.forEach((p, i) => {
     const path = `$.patches.ui[${i}]`;
     if (!isRecord(p)) { err(path, "must be an object"); return; }
     if (p.profile === "verified-diff@0") {
-      if (!is02) {
-        err(`${path}.profile`, `verified-diff@0 requires specVersion 0.2.0 (document declares ${String(doc.specVersion)})`);
+      if (!atLeast("0.2.0")) {
+        err(`${path}.profile`, `verified-diff@0 requires specVersion 0.2.0 or later (document declares ${String(doc.specVersion)})`);
         return;
       }
       checkMembers(p, ["profile", "artifactId", "baseFingerprint", "diff", "newFingerprint", "explanation"], path);
@@ -193,8 +215,19 @@ export function validate(document: unknown): ValidationResult {
     if (typeof p.explanation !== "string" || p.explanation === "") err(`${path}.explanation`, "explanation required");
     if (!Array.isArray(p.operations)) err(`${path}.operations`, "required array");
     else (p.operations as unknown[]).forEach((op, j) => {
-      const dop = isRecord(op) ? op.op : undefined;
-      if (!DATA_OPS.includes(dop as string)) err(`${path}.operations[${j}].op`, `unknown data operation: ${String(dop)}`);
+      const opPath = `${path}.operations[${j}]`;
+      if (!isRecord(op)) { err(opPath, "must be an object"); return; }
+      const allowed = DATA_OPS[op.op as string];
+      if (!allowed) { err(`${opPath}.op`, `unknown data operation: ${String(op.op)}`); return; }
+      checkMembers(op, allowed, opPath);
+      for (const req of allowed) if (!(req in op)) err(`${opPath}.${req}`, "required member missing");
+      if (typeof op.entity !== "string" || op.entity === "") err(`${opPath}.entity`, "required non-empty string");
+      for (const body of ["values", "set"]) {
+        if (allowed.includes(body) && body in op && !isRecord(op[body])) {
+          err(`${opPath}.${body}`, "must be an object of field name to literal value");
+        }
+      }
+      if (allowed.includes("where") && "where" in op) checkWhere(op.where, `${opPath}.where`);
     });
   });
 

@@ -1,0 +1,345 @@
+[
+  {
+    "name": "all-three-operations-valid",
+    "expect": "valid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "data",
+            "ref": "data",
+            "fingerprint": "sha256:dadadadadadadadadadadadadadadadadadadadadadadadadadadadadadadada"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "seed-and-prune",
+            "explanation": "fixture payload",
+            "operations": [
+              { "op": "insert", "entity": "item", "values": { "sku": "SKU-1", "qty": 3 } },
+              {
+                "op": "update",
+                "entity": "item",
+                "where": { "field": "sku", "equals": "SKU-1" },
+                "set": { "qty": 4 }
+              },
+              { "op": "delete", "entity": "item", "where": { "field": "qty", "equals": 0 } }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "where-as-key-value-map-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "restock",
+            "explanation": "fixture payload",
+            "operations": [
+              {
+                "op": "update",
+                "entity": "item",
+                "where": { "sku": "SKU-1001" },
+                "set": { "restockDue": "2026-08-20" }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "where-equals-non-literal-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "expression-attempt",
+            "explanation": "fixture payload",
+            "operations": [
+              {
+                "op": "delete",
+                "entity": "item",
+                "where": { "field": "qty", "equals": { "$lt": 1 } }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "update-missing-set-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "no-set",
+            "explanation": "fixture payload",
+            "operations": [
+              { "op": "update", "entity": "item", "where": { "field": "sku", "equals": "SKU-1" } }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "insert-with-where-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "insert-with-predicate",
+            "explanation": "fixture payload",
+            "operations": [
+              {
+                "op": "insert",
+                "entity": "item",
+                "values": { "sku": "SKU-2" },
+                "where": { "field": "sku", "equals": "SKU-2" }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "operation-unknown-member-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "vendor-extra",
+            "explanation": "fixture payload",
+            "operations": [
+              { "op": "insert", "entity": "item", "values": { "sku": "SKU-3" }, "limit": 1 }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "operation-empty-entity-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "no-entity",
+            "explanation": "fixture payload",
+            "operations": [{ "op": "insert", "entity": "", "values": { "sku": "SKU-4" } }]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "non-object-operation-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "not-an-object",
+            "explanation": "fixture payload",
+            "operations": ["delete every item"]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "tightening-applies-at-0.2.0-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "restock",
+            "explanation": "fixture payload",
+            "operations": [
+              {
+                "op": "update",
+                "entity": "item",
+                "where": { "sku": "SKU-1001" },
+                "set": { "restockDue": "2026-08-20" }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "data-kind-below-0.3.0-invalid",
+    "expect": "invalid",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "data",
+            "ref": "data",
+            "fingerprint": "sha256:dadadadadadadadadadadadadadadadadadadadadadadadadadadadadadadada"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "prune",
+            "explanation": "fixture payload",
+            "operations": [{ "op": "delete", "entity": "item", "where": { "field": "qty", "equals": 0 } }]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "conforming-data-patch-at-0.2.0-valid",
+    "expect": "valid",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [],
+        "data": [
+          {
+            "id": "prune",
+            "explanation": "fixture payload",
+            "operations": [{ "op": "delete", "entity": "item", "where": { "field": "qty", "equals": 0 } }]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "verified-diff-still-allowed-at-0.3.0-valid",
+    "expect": "valid",
+    "document": {
+      "specVersion": "0.3.0",
+      "intent": "data patch fixture",
+      "provenance": {
+        "producedBy": "fixture-generator",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "baseState": []
+      },
+      "patches": {
+        "schema": [],
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen-items",
+            "baseFingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "diff": "@@ -1,1 +1,1 @@\n-old\n+new\n",
+            "newFingerprint": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "explanation": "fixture payload"
+          }
+        ],
+        "data": []
+      }
+    }
+  }
+]

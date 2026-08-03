@@ -1,10 +1,10 @@
 # Vivarium Changeset Specification
 
-**Version: 0.2.0** · Status: normative — shipped in both reference SDKs
-(`ts-v0.2.0` / `dotnet-v0.2.0`, 2026-07-19). The spec carries no separate
-0.2.0 tag: release tags now name their artifact, because one shared tag
-coupled the two registries. Differences from 0.1.0 (tagged 2026-07-16) are
-listed in [Changes from 0.1.0](#changes-from-010).
+**Version: 0.3.0** · Status: normative. The spec carries no separate version
+tag: release tags name their artifact (`ts-v*` / `dotnet-v*`), because one
+shared tag coupled the two registries. Differences from the preceding minors
+are listed in [Changes from 0.2.0](#changes-from-020) and
+[Changes from 0.1.0](#changes-from-010).
 
 The key words MUST, MUST NOT, SHOULD, MAY are to be interpreted as in RFC 2119.
 
@@ -69,16 +69,26 @@ MUST be rejected by validators (closed model in v0 — forward compatibility is 
   `fingerprint` a `sha256:`-prefixed string. A malformed entry is a **validation
   failure** — validators MUST reject it (never crash on it), and MUST reject unknown
   `kind` values (closed model; vocabulary additions are a spec minor).
-- `kind` vocabulary (0.2): `schema` — a live backend schema state · `ui-artifact` — a
+- `kind` vocabulary: `schema` — a live backend schema state · `ui-artifact` — a
   UI artifact's content · `changeset` — **authoring lineage**: the changeset document
-  this one was derived or rebased from.
+  this one was derived or rebased from · `data` (0.3) — a live backend **data** state,
+  exactly symmetric with `schema`.
+- **`data` requires `specVersion` 0.3.0 or later.** A document that declares an earlier
+  version and carries a `data` entry MUST be rejected — the same rule the
+  `verified-diff@0` profile follows (§5.2.2), and the mechanism that makes the
+  producer guidance in §9 enforceable rather than advisory.
+- A changeset whose `patches.data` is non-empty SHOULD declare the data base it was
+  authored against. A drift-detecting consumer can only check what the document
+  declares; an undeclared facet is an unchecked facet, not a safe one.
 - **Lineage drift exemption**: `kind: "changeset"` entries record authoring lineage,
   not live state. The drift-refusal requirement above does NOT apply to them — a
   consumer MUST NOT refuse solely because a lineage changeset is absent from, or
   unknown to, the live system.
-- How a `schema` base fingerprint is computed from a live backend is adapter-defined but
-  MUST be deterministic for a given state. *(Open item O-1: a recommended canonical
-  schema-snapshot form may be specified in a later minor.)*
+- How a `schema` or `data` base fingerprint is computed from a live backend, and what
+  `ref` names, are adapter-defined but MUST be deterministic for a given state. For
+  `data` the unit is the **data facet as a whole** in 0.3 — the granularity an adapter
+  already publishes. *(Open item O-1: a recommended canonical schema-snapshot form.
+  Open item O-4: finer data granularity — per-entity or per-row.)*
 - `ui-artifact` fingerprints are `sha256:` + hex SHA-256 over the artifact's raw UTF-8
   content bytes (no JCS — artifact content is not JSON).
 - `editContext` (OPTIONAL): the serialized selection/screen context the change was made
@@ -225,8 +235,38 @@ Run-once, reviewable data operations. v0 keeps expressions out — literal value
 }
 ```
 
-`id` is unique within the document; consumers use it for run-once bookkeeping.
-*(Open item O-2: transformation expressions are deferred until demand proves out.)*
+`id` is unique within the document; consumers use it for run-once bookkeeping. The
+`explanation` is carried once per patch, not per operation — a data patch is one
+reviewable unit of work.
+
+**The example above is illustrative; the rules below are normative.** Each operation
+object MUST carry exactly the members its `op` defines — no more (closed model, §2) and
+no fewer:
+
+| `op` | REQUIRED members |
+| --- | --- |
+| `insert` | `op`, `entity`, `values` |
+| `update` | `op`, `entity`, `where`, `set` |
+| `delete` | `op`, `entity`, `where` |
+
+- `entity` MUST be a non-empty string naming the entity the operation targets. Resolving
+  it against a live backend is an adapter concern.
+- `values` and `set` MUST be JSON objects. Their members are field names; their values
+  are the literals to write. This spec does not constrain those literals — the schema
+  facet and the backend do.
+- `where` MUST be an object with exactly the members `field` and `equals`: `field` a
+  non-empty string, `equals` a JSON **literal** — string, number, boolean, or null. It
+  selects the rows whose `field` equals that literal, and nothing else. Arrays, objects,
+  operators, and multi-clause predicates are outside 0.x (see O-2).
+
+A validator MUST reject an operation that violates any of the above. Data is the facet
+where a malformed patch is hardest to see and most expensive to land: it passes review
+as prose, seals into the fingerprint, and fails inside a backend write path. The
+strictness here is deliberately the same as the schema facet's (§5.1) — one document
+MUST NOT hold two standards of rigor.
+
+*(Open item O-2: transformation expressions and richer predicates are deferred until
+demand proves out.)*
 
 ## 6. Fingerprint
 
@@ -261,7 +301,8 @@ well-formed with known `kind` (§4); schema ops and types are from the v0 vocabu
 `whole-artifact@0` patches satisfy the self-contained diff-consistency check (§5.2.1);
 `verified-diff@0` patches have a non-null `baseFingerprint`, a `diff` that parses under
 the dialect (§5.2.2) with ≥1 hunk, and `newFingerprint ≠ baseFingerprint`; data patch
-`id`s unique; `fingerprint`, if present, matches recomputation.
+`id`s unique and every data operation carries exactly its `op`'s members with a
+well-formed `where` (§5.3); `fingerprint`, if present, matches recomputation.
 
 **Layer 2 — complete verification (base supplied).** For each `verified-diff@0` patch,
 given the base artifact content: ① the base content's artifact fingerprint MUST equal
@@ -283,7 +324,32 @@ documents whose major.minor they do not support. This spec never implies a 1.0 t
 Because unsupported versions are rejected, the stamp itself forces consumer upgrades —
 so producers SHOULD stamp the **lowest** `specVersion` whose features the document
 actually uses (a document using no 0.2 feature SHOULD carry `0.1.0`). This decouples
-ecosystem-wide upgrades from profile adoption.
+ecosystem-wide upgrades from profile adoption. Where a feature would be silently
+misread by an older consumer, the spec makes that SHOULD checkable by gating the
+feature on its version — `verified-diff@0` on 0.2 (§5.2.2), `baseState.kind: "data"`
+on 0.3 (§4). Tightenings are never gated: a rule about what was always malformed
+applies at every version a validator supports.
+
+## Changes from 0.2.0
+
+- **Added — `baseState.kind: "data"` (§4)**: additive vocabulary, gated on
+  `specVersion` 0.3.0. A changeset that changes data can now declare the data state it
+  was authored against, exactly as it already could for schema. 0.2 excluded this kind
+  for lack of a use case; data-only changesets are the use case — they had no way to
+  say what they stood on, so a drift-detecting consumer had nothing to check and
+  refused nothing. Migration: none. Producers that begin emitting `data` entries MUST
+  stamp 0.3.0, and consumers of those documents will start refusing stale proposals
+  that previously applied — the intended effect, not a regression.
+- **Tightened — data operation bodies (§5.3)**: `op` was the only member 0.2 validators
+  checked; `entity`, `where`, `set`, and `values` were unvalidated. Operations now
+  carry exactly their `op`'s members, and `where` is closed to
+  `{ field, equals: <literal> }`. Migration: documents whose data operations use another
+  shape — most plausibly a key/value `where` map — are invalid at every supported
+  `specVersion`. Such documents were already outside the §5.3 model; they did not fail
+  earlier, they failed later, in a backend write path.
+- **Documented — §5.3 was normative only by example.** The operation table, the literal
+  rule, and the closed `where` form state in prose what the JSON example implied.
+- **Open item O-4 added** — finer `data` fingerprint granularity (§4).
 
 ## Changes from 0.1.0
 
@@ -306,6 +372,11 @@ ecosystem-wide upgrades from profile adoption.
 ## Open items
 
 - **O-1** Canonical schema-snapshot form for `baseState` schema fingerprints (§4).
-- **O-2** Data transformation expressions (§5.3).
+- **O-2** Data transformation expressions and richer `where` predicates (§5.3).
 - **O-3** ~~Conformance fixtures directory (`fixtures/`)~~ — resolved: populated since
-  the 0.1 reference SDKs; 0.2 adds the `verified-diff@0` dialect corpus.
+  the 0.1 reference SDKs; 0.2 adds the `verified-diff@0` dialect corpus, 0.3 the data
+  patch corpus.
+- **O-4** Finer `data` base granularity (§4). 0.3 fingerprints the data facet as a
+  whole, so any data change drifts every data-declaring proposal. Per-entity or per-row
+  units would narrow that, at the cost of an adapter contract for computing them —
+  deferred until the coarse unit is shown to refuse too much.

@@ -14,10 +14,11 @@ public sealed record ValidationResult(bool Valid, IReadOnlyList<ValidationError>
 /// </summary>
 public static class ChangesetValidator
 {
-    public static readonly string[] SupportedSpecVersions = ["0.1.0", "0.2.0"];
+    /// <summary>Supported spec versions, ordered ascending — position is precedence.</summary>
+    public static readonly string[] SupportedSpecVersions = ["0.1.0", "0.2.0", "0.3.0"];
 
-    /// <summary>Closed <c>baseState.kind</c> vocabulary (spec §4, 0.2).</summary>
-    public static readonly string[] BaseStateKinds = ["schema", "ui-artifact", "changeset"];
+    /// <summary>Closed <c>baseState.kind</c> vocabulary (spec §4). <c>data</c> is gated on 0.3.0.</summary>
+    public static readonly string[] BaseStateKinds = ["schema", "ui-artifact", "changeset", "data"];
 
     private static readonly Dictionary<string, string[]> SchemaOps = new()
     {
@@ -33,7 +34,14 @@ public static class ChangesetValidator
     };
 
     private static readonly string[] LogicalTypes = ["string", "number", "boolean", "date", "datetime", "reference", "json"];
-    private static readonly string[] DataOps = ["insert", "update", "delete"];
+
+    /// <summary>Per-operation required members (spec §5.3) — the data facet's counterpart to <see cref="SchemaOps"/>.</summary>
+    private static readonly Dictionary<string, string[]> DataOps = new()
+    {
+        ["insert"] = ["op", "entity", "values"],
+        ["update"] = ["op", "entity", "where", "set"],
+        ["delete"] = ["op", "entity", "where"],
+    };
 
     public static ValidationResult Validate(string json)
     {
@@ -67,10 +75,31 @@ public static class ChangesetValidator
             return false;
         }
 
+        // `where` is closed to `{ field, equals: <literal> }` — spec §5.3, no expressions.
+        void CheckWhere(JsonNode? where, string path)
+        {
+            if (where is not JsonObject w) { Err(path, "must be an object { field, equals } (spec §5.3)"); return; }
+            CheckMembers(w, ["field", "equals"], path);
+            if (!TryString(w["field"], out var field) || field == "")
+                Err($"{path}.field", "required non-empty string");
+            if (!w.ContainsKey("equals")) Err($"{path}.equals", "required member missing");
+            else
+            {
+                var kind = w["equals"]?.GetValueKind() ?? JsonValueKind.Null;
+                if (kind is not (JsonValueKind.String or JsonValueKind.Number
+                    or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null))
+                    Err($"{path}.equals", "must be a literal — string, number, boolean, or null (spec §5.3, v0 keeps expressions out)");
+            }
+        }
+
         CheckMembers(doc, ["specVersion", "id", "intent", "provenance", "patches", "fingerprint", "approvals"], "$");
 
         if (!TryString(doc["specVersion"], out var specVersion) || !SupportedSpecVersions.Contains(specVersion))
             Err("$.specVersion", $"unsupported specVersion: {doc["specVersion"]?.ToJsonString() ?? "undefined"}");
+        // SupportedSpecVersions is ordered ascending, so position is precedence.
+        // Version-gated *features* use this (spec §9); tightenings never do.
+        var declared = Array.IndexOf(SupportedSpecVersions, specVersion);
+        bool AtLeast(string v) => declared >= 0 && declared >= Array.IndexOf(SupportedSpecVersions, v);
         if (!TryString(doc["intent"], out var intent) || intent.Trim() == "")
             Err("$.intent", "intent is required and must be a non-empty string");
 
@@ -95,6 +124,8 @@ public static class ChangesetValidator
                     CheckMembers(entry, ["kind", "ref", "fingerprint"], path);
                     if (!TryString(entry["kind"], out var kind) || !BaseStateKinds.Contains(kind))
                         Err($"{path}.kind", $"unknown baseState kind: {entry["kind"]?.ToJsonString() ?? "undefined"} (closed vocabulary, spec §4)");
+                    else if (kind == "data" && !AtLeast("0.3.0"))
+                        Err($"{path}.kind", $"baseState kind \"data\" requires specVersion 0.3.0 or later (document declares {doc["specVersion"]?.ToJsonString() ?? "undefined"})");
                     if (!TryString(entry["ref"], out var entryRef) || entryRef == "")
                         Err($"{path}.ref", "required non-empty string");
                     if (!TryString(entry["fingerprint"], out var entryFp) || !entryFp.StartsWith(ChangesetFingerprint.Prefix, StringComparison.Ordinal))
@@ -153,17 +184,15 @@ public static class ChangesetValidator
                 Err($"{path}.newType", $"unknown logical type: {p["newType"]?.ToJsonString() ?? "undefined"}");
         }
 
-        var is02 = specVersion == "0.2.0";
-
         for (var i = 0; i < ui.Count; i++)
         {
             var path = $"$.patches.ui[{i}]";
             if (ui[i] is not JsonObject p) { Err(path, "must be an object"); continue; }
             if (TryString(p["profile"], out var uiProfile) && uiProfile == "verified-diff@0")
             {
-                if (!is02)
+                if (!AtLeast("0.2.0"))
                 {
-                    Err($"{path}.profile", $"verified-diff@0 requires specVersion 0.2.0 (document declares {doc["specVersion"]?.ToJsonString() ?? "undefined"})");
+                    Err($"{path}.profile", $"verified-diff@0 requires specVersion 0.2.0 or later (document declares {doc["specVersion"]?.ToJsonString() ?? "undefined"})");
                     continue;
                 }
                 CheckMembers(p, ["profile", "artifactId", "baseFingerprint", "diff", "newFingerprint", "explanation"], path);
@@ -240,9 +269,22 @@ public static class ChangesetValidator
             else
                 for (var j = 0; j < operations.Count; j++)
                 {
-                    var opNode = (operations[j] as JsonObject)?["op"];
-                    if (!TryString(opNode, out var dop) || !DataOps.Contains(dop))
-                        Err($"{path}.operations[{j}].op", $"unknown data operation: {opNode?.ToJsonString() ?? "undefined"}");
+                    var opPath = $"{path}.operations[{j}]";
+                    if (operations[j] is not JsonObject op) { Err(opPath, "must be an object"); continue; }
+                    if (!TryString(op["op"], out var dop) || !DataOps.TryGetValue(dop, out var allowed))
+                    {
+                        Err($"{opPath}.op", $"unknown data operation: {op["op"]?.ToJsonString() ?? "undefined"}");
+                        continue;
+                    }
+                    CheckMembers(op, allowed, opPath);
+                    foreach (var req in allowed)
+                        if (!op.ContainsKey(req)) Err($"{opPath}.{req}", "required member missing");
+                    if (!TryString(op["entity"], out var entity) || entity == "")
+                        Err($"{opPath}.entity", "required non-empty string");
+                    foreach (var body in new[] { "values", "set" })
+                        if (allowed.Contains(body) && op.ContainsKey(body) && op[body] is not JsonObject)
+                            Err($"{opPath}.{body}", "must be an object of field name to literal value");
+                    if (allowed.Contains("where") && op.ContainsKey("where")) CheckWhere(op["where"], $"{opPath}.where");
                 }
         }
 
