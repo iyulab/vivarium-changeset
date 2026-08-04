@@ -84,6 +84,27 @@ public class FixtureTests
     }
 
     [Fact]
+    public void ValidationMessageFixturesReproduce()
+    {
+        // Cross-SDK message parity: the exact (path, message) list a document
+        // produces is part of the contract — the validation error surface is the
+        // spec-delivery channel for authoring agents. This fixture is byte-identical
+        // across the .NET and TypeScript SDKs; the assertion is order-sensitive.
+        foreach (var vector in Load("validation-messages.json").EnumerateArray())
+        {
+            var name = vector.GetProperty("name").GetString();
+            var result = ChangesetValidator.Validate(JsonNode.Parse(vector.GetProperty("document").GetRawText()));
+            var expected = vector.GetProperty("errors").EnumerateArray()
+                .Select(e => (Path: e.GetProperty("path").GetString()!, Message: e.GetProperty("message").GetString()!))
+                .ToList();
+            var actual = result.Errors.Select(e => (e.Path, e.Message)).ToList();
+            Assert.True(expected.SequenceEqual(actual),
+                $"case: {name}\n  expected: {string.Join(" | ", expected.Select(e => $"{e.Path}: {e.Message}"))}" +
+                $"\n  actual:   {string.Join(" | ", actual.Select(e => $"{e.Path}: {e.Message}"))}");
+        }
+    }
+
+    [Fact]
     public void BaseStateTighteningFixturesReproduce()
     {
         foreach (var vector in Load("base-state.json").EnumerateArray())

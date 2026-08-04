@@ -10,6 +10,9 @@ export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0", "0.3.0"];
 /** Closed `baseState.kind` vocabulary (spec §4). `data` is gated on 0.3.0. */
 export const BASE_STATE_KINDS = ["schema", "ui-artifact", "changeset", "data"];
 
+/** Closed `patches.ui[].profile` vocabulary. */
+export const UI_PATCH_PROFILES = ["whole-artifact@0", "verified-diff@0"];
+
 const SCHEMA_OPS: Record<string, string[]> = {
   "entity.create": ["op", "entity", "fields", "explanation"],
   "entity.rename": ["op", "entity", "newName", "explanation"],
@@ -49,10 +52,27 @@ export function validate(document: unknown): ValidationResult {
     }
   };
 
+  const isRecord = (v: unknown): v is Record<string, unknown> =>
+    typeof v === "object" && v !== null && !Array.isArray(v);
+
+  // Closed-vocabulary rejections enumerate the accepted values — the error
+  // surface is the spec-delivery channel for authoring agents, so a rejection
+  // that names what IS accepted turns a guessing loop into a one-shot fix.
+  const supported = (vals: string[], note?: string) =>
+    note === undefined
+      ? `(supported: ${vals.join(", ")})`
+      : `(supported: ${vals.join(", ")}; ${note})`;
+
+  // Render the offending value as JSON — quoting disambiguates a string ("0.1")
+  // from a number (0.1), which is exactly the typo class authors hit. Matches
+  // the .NET SDK's JsonNode.ToJsonString() so error messages are byte-identical
+  // across SDKs. (Absent → "undefined"; explicit null keeps its JSON form "null".)
+  const jsonRepr = (v: unknown) => (v === undefined ? "undefined" : JSON.stringify(v));
+
   checkMembers(doc, ["specVersion", "id", "intent", "provenance", "patches", "fingerprint", "approvals"], "$");
 
   if (!SUPPORTED_SPEC_VERSIONS.includes(doc.specVersion as string)) {
-    err("$.specVersion", `unsupported specVersion: ${String(doc.specVersion)}`);
+    err("$.specVersion", `unsupported specVersion: ${jsonRepr(doc.specVersion)} ${supported(SUPPORTED_SPEC_VERSIONS)}`);
   }
   // SUPPORTED_SPEC_VERSIONS is ordered ascending, so position is precedence.
   // Version-gated *features* use this (spec §9); tightenings never do.
@@ -63,8 +83,8 @@ export function validate(document: unknown): ValidationResult {
   }
 
   // provenance
-  const prov = doc.provenance as Record<string, unknown> | undefined;
-  if (typeof prov !== "object" || prov === null) err("$.provenance", "provenance is required");
+  const prov = doc.provenance;
+  if (!isRecord(prov)) err("$.provenance", "provenance" in doc ? "provenance must be an object" : "provenance is required");
   else {
     checkMembers(prov, ["producedBy", "createdAt", "baseState", "editContext"], "$.provenance");
     if (typeof prov.producedBy !== "string") err("$.provenance.producedBy", "required string");
@@ -79,9 +99,9 @@ export function validate(document: unknown): ValidationResult {
       const e = entry as Record<string, unknown>;
       checkMembers(e, ["kind", "ref", "fingerprint"], path);
       if (!BASE_STATE_KINDS.includes(e.kind as string)) {
-        err(`${path}.kind`, `unknown baseState kind: ${String(e.kind)} (closed vocabulary, spec §4)`);
+        err(`${path}.kind`, `unknown baseState kind: ${jsonRepr(e.kind)} ${supported(BASE_STATE_KINDS, "closed vocabulary, spec §4")}`);
       } else if (e.kind === "data" && !atLeast("0.3.0")) {
-        err(`${path}.kind`, `baseState kind "data" requires specVersion 0.3.0 or later (document declares ${String(doc.specVersion)})`);
+        err(`${path}.kind`, `baseState kind "data" requires specVersion 0.3.0 or later (document declares ${jsonRepr(doc.specVersion)})`);
       }
       if (typeof e.ref !== "string" || e.ref === "") err(`${path}.ref`, "required non-empty string");
       if (typeof e.fingerprint !== "string" || !e.fingerprint.startsWith(FINGERPRINT_PREFIX)) {
@@ -91,9 +111,11 @@ export function validate(document: unknown): ValidationResult {
   }
 
   // patches
-  const patches = doc.patches as Record<string, unknown> | undefined;
-  if (typeof patches !== "object" || patches === null) {
-    err("$.patches", "patches is required");
+  const patches = doc.patches;
+  if (!isRecord(patches)) {
+    err("$.patches", "patches" in doc
+      ? "patches must be an object with facet keys (schema, ui, data)"
+      : "patches is required");
     return { valid: errors.length === 0, errors };
   }
   checkMembers(patches, ["schema", "ui", "data"], "$.patches");
@@ -113,9 +135,6 @@ export function validate(document: unknown): ValidationResult {
     err("$.patches", "at least one facet must be non-empty (spec §3)");
   }
 
-  const isRecord = (v: unknown): v is Record<string, unknown> =>
-    typeof v === "object" && v !== null && !Array.isArray(v);
-
   /** `where` is closed to `{ field, equals: <literal> }` — spec §5.3, no expressions. */
   const checkWhere = (where: unknown, path: string) => {
     if (!isRecord(where)) { err(path, "must be an object { field, equals } (spec §5.3)"); return; }
@@ -133,7 +152,7 @@ export function validate(document: unknown): ValidationResult {
     const path = `$.patches.schema[${i}]`;
     if (!isRecord(p)) { err(path, "must be an object"); return; }
     const allowed = SCHEMA_OPS[p.op as string];
-    if (!allowed) { err(`${path}.op`, `unknown schema operation: ${String(p.op)}`); return; }
+    if (!allowed) { err(`${path}.op`, `unknown schema operation: ${jsonRepr(p.op)} ${supported(Object.keys(SCHEMA_OPS))}`); return; }
     checkMembers(p, allowed, path);
     for (const req of allowed) if (!(req in p)) err(`${path}.${req}`, "required member missing");
     if (typeof p.explanation !== "string" || p.explanation === "") err(`${path}.explanation`, "explanation required");
@@ -142,13 +161,13 @@ export function validate(document: unknown): ValidationResult {
       p.op === "field.add" && p.field ? [p.field] : [];
     for (const f of fields) {
       const ftype = isRecord(f) ? f.type : undefined;
-      if (!LOGICAL_TYPES.includes(ftype as string)) err(`${path}`, `unknown logical type: ${String(ftype)}`);
+      if (!LOGICAL_TYPES.includes(ftype as string)) err(`${path}`, `unknown logical type: ${jsonRepr(ftype)} ${supported(LOGICAL_TYPES)}`);
       else if (ftype === "reference" && typeof (f as Record<string, unknown>).target !== "string") {
         err(`${path}`, "reference type requires target");
       }
     }
     if (p.op === "field.retype" && !LOGICAL_TYPES.includes(p.newType as string)) {
-      err(`${path}.newType`, `unknown logical type: ${String(p.newType)}`);
+      err(`${path}.newType`, `unknown logical type: ${jsonRepr(p.newType)} ${supported(LOGICAL_TYPES)}`);
     }
   });
 
@@ -157,7 +176,7 @@ export function validate(document: unknown): ValidationResult {
     if (!isRecord(p)) { err(path, "must be an object"); return; }
     if (p.profile === "verified-diff@0") {
       if (!atLeast("0.2.0")) {
-        err(`${path}.profile`, `verified-diff@0 requires specVersion 0.2.0 or later (document declares ${String(doc.specVersion)})`);
+        err(`${path}.profile`, `verified-diff@0 requires specVersion 0.2.0 or later (document declares ${jsonRepr(doc.specVersion)})`);
         return;
       }
       checkMembers(p, ["profile", "artifactId", "baseFingerprint", "diff", "newFingerprint", "explanation"], path);
@@ -181,7 +200,7 @@ export function validate(document: unknown): ValidationResult {
       return;
     }
     checkMembers(p, ["profile", "artifactId", "baseFingerprint", "newContent", "reviewDiff", "explanation"], path);
-    if (p.profile !== "whole-artifact@0") { err(`${path}.profile`, `unknown UI patch profile: ${String(p.profile)}`); return; }
+    if (p.profile !== "whole-artifact@0") { err(`${path}.profile`, `unknown UI patch profile: ${jsonRepr(p.profile)} ${supported(UI_PATCH_PROFILES)}`); return; }
     if (typeof p.artifactId !== "string") err(`${path}.artifactId`, "required string");
     if (typeof p.newContent !== "string") err(`${path}.newContent`, "required string");
     if (typeof p.reviewDiff !== "string") err(`${path}.reviewDiff`, "required string (reviewability invariant)");
@@ -218,7 +237,7 @@ export function validate(document: unknown): ValidationResult {
       const opPath = `${path}.operations[${j}]`;
       if (!isRecord(op)) { err(opPath, "must be an object"); return; }
       const allowed = DATA_OPS[op.op as string];
-      if (!allowed) { err(`${opPath}.op`, `unknown data operation: ${String(op.op)}`); return; }
+      if (!allowed) { err(`${opPath}.op`, `unknown data operation: ${jsonRepr(op.op)} ${supported(Object.keys(DATA_OPS))}`); return; }
       checkMembers(op, allowed, opPath);
       for (const req of allowed) if (!(req in op)) err(`${opPath}.${req}`, "required member missing");
       if (typeof op.entity !== "string" || op.entity === "") err(`${opPath}.entity`, "required non-empty string");

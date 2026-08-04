@@ -20,6 +20,9 @@ public static class ChangesetValidator
     /// <summary>Closed <c>baseState.kind</c> vocabulary (spec §4). <c>data</c> is gated on 0.3.0.</summary>
     public static readonly string[] BaseStateKinds = ["schema", "ui-artifact", "changeset", "data"];
 
+    /// <summary>Closed <c>patches.ui[].profile</c> vocabulary.</summary>
+    public static readonly string[] UiPatchProfiles = ["whole-artifact@0", "verified-diff@0"];
+
     private static readonly Dictionary<string, string[]> SchemaOps = new()
     {
         ["entity.create"] = ["op", "entity", "fields", "explanation"],
@@ -92,10 +95,18 @@ public static class ChangesetValidator
             }
         }
 
+        // Closed-vocabulary rejections enumerate the accepted values — the error
+        // surface is the spec-delivery channel for authoring agents, so a rejection
+        // that names what IS accepted turns a guessing loop into a one-shot fix.
+        static string Supported(IEnumerable<string> vals, string? note = null)
+            => note is null
+                ? $"(supported: {string.Join(", ", vals)})"
+                : $"(supported: {string.Join(", ", vals)}; {note})";
+
         CheckMembers(doc, ["specVersion", "id", "intent", "provenance", "patches", "fingerprint", "approvals"], "$");
 
         if (!TryString(doc["specVersion"], out var specVersion) || !SupportedSpecVersions.Contains(specVersion))
-            Err("$.specVersion", $"unsupported specVersion: {doc["specVersion"]?.ToJsonString() ?? "undefined"}");
+            Err("$.specVersion", $"unsupported specVersion: {doc["specVersion"]?.ToJsonString() ?? "undefined"} {Supported(SupportedSpecVersions)}");
         // SupportedSpecVersions is ordered ascending, so position is precedence.
         // Version-gated *features* use this (spec §9); tightenings never do.
         var declared = Array.IndexOf(SupportedSpecVersions, specVersion);
@@ -105,7 +116,7 @@ public static class ChangesetValidator
 
         // provenance
         if (doc["provenance"] is not JsonObject prov)
-            Err("$.provenance", "provenance is required");
+            Err("$.provenance", doc.ContainsKey("provenance") ? "provenance must be an object" : "provenance is required");
         else
         {
             CheckMembers(prov, ["producedBy", "createdAt", "baseState", "editContext"], "$.provenance");
@@ -123,7 +134,7 @@ public static class ChangesetValidator
                     }
                     CheckMembers(entry, ["kind", "ref", "fingerprint"], path);
                     if (!TryString(entry["kind"], out var kind) || !BaseStateKinds.Contains(kind))
-                        Err($"{path}.kind", $"unknown baseState kind: {entry["kind"]?.ToJsonString() ?? "undefined"} (closed vocabulary, spec §4)");
+                        Err($"{path}.kind", $"unknown baseState kind: {entry["kind"]?.ToJsonString() ?? "undefined"} {Supported(BaseStateKinds, "closed vocabulary, spec §4")}");
                     else if (kind == "data" && !AtLeast("0.3.0"))
                         Err($"{path}.kind", $"baseState kind \"data\" requires specVersion 0.3.0 or later (document declares {doc["specVersion"]?.ToJsonString() ?? "undefined"})");
                     if (!TryString(entry["ref"], out var entryRef) || entryRef == "")
@@ -136,7 +147,9 @@ public static class ChangesetValidator
         // patches
         if (doc["patches"] is not JsonObject patches)
         {
-            Err("$.patches", "patches is required");
+            Err("$.patches", doc.ContainsKey("patches")
+                ? "patches must be an object with facet keys (schema, ui, data)"
+                : "patches is required");
             return new ValidationResult(errors.Count == 0, errors);
         }
         CheckMembers(patches, ["schema", "ui", "data"], "$.patches");
@@ -161,7 +174,7 @@ public static class ChangesetValidator
             if (schema[i] is not JsonObject p) { Err(path, "must be an object"); continue; }
             if (!TryString(p["op"], out var op) || !SchemaOps.TryGetValue(op, out var allowed))
             {
-                Err($"{path}.op", $"unknown schema operation: {p["op"]?.ToJsonString() ?? "undefined"}");
+                Err($"{path}.op", $"unknown schema operation: {p["op"]?.ToJsonString() ?? "undefined"} {Supported(SchemaOps.Keys)}");
                 continue;
             }
             CheckMembers(p, allowed, path);
@@ -176,12 +189,12 @@ public static class ChangesetValidator
             {
                 var ftype = (f as JsonObject)?["type"];
                 if (!TryString(ftype, out var t) || !LogicalTypes.Contains(t))
-                    Err(path, $"unknown logical type: {ftype?.ToJsonString() ?? "undefined"}");
+                    Err(path, $"unknown logical type: {ftype?.ToJsonString() ?? "undefined"} {Supported(LogicalTypes)}");
                 else if (t == "reference" && !TryString((f as JsonObject)?["target"], out _))
                     Err(path, "reference type requires target");
             }
             if (op == "field.retype" && (!TryString(p["newType"], out var nt) || !LogicalTypes.Contains(nt)))
-                Err($"{path}.newType", $"unknown logical type: {p["newType"]?.ToJsonString() ?? "undefined"}");
+                Err($"{path}.newType", $"unknown logical type: {p["newType"]?.ToJsonString() ?? "undefined"} {Supported(LogicalTypes)}");
         }
 
         for (var i = 0; i < ui.Count; i++)
@@ -219,7 +232,7 @@ public static class ChangesetValidator
             CheckMembers(p, ["profile", "artifactId", "baseFingerprint", "newContent", "reviewDiff", "explanation"], path);
             if (!TryString(p["profile"], out var profile) || profile != "whole-artifact@0")
             {
-                Err($"{path}.profile", $"unknown UI patch profile: {p["profile"]?.ToJsonString() ?? "undefined"}");
+                Err($"{path}.profile", $"unknown UI patch profile: {p["profile"]?.ToJsonString() ?? "undefined"} {Supported(UiPatchProfiles)}");
                 continue;
             }
             if (!TryString(p["artifactId"], out _)) Err($"{path}.artifactId", "required string");
@@ -273,7 +286,7 @@ public static class ChangesetValidator
                     if (operations[j] is not JsonObject op) { Err(opPath, "must be an object"); continue; }
                     if (!TryString(op["op"], out var dop) || !DataOps.TryGetValue(dop, out var allowed))
                     {
-                        Err($"{opPath}.op", $"unknown data operation: {op["op"]?.ToJsonString() ?? "undefined"}");
+                        Err($"{opPath}.op", $"unknown data operation: {op["op"]?.ToJsonString() ?? "undefined"} {Supported(DataOps.Keys)}");
                         continue;
                     }
                     CheckMembers(op, allowed, opPath);

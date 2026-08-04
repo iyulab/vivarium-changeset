@@ -52,6 +52,17 @@ test("data patch fixtures reproduce (spec §5.3 + §4 data kind, 0.3)", async ()
   }
 });
 
+// Cross-SDK message parity: the exact {path, message} list a document produces
+// is part of the contract — the validation error surface is the spec-delivery
+// channel for authoring agents. This fixture is byte-identical across the .NET
+// and TypeScript SDKs; the assertion is order-sensitive.
+test("validation-message fixtures reproduce exact error lists", async () => {
+  const { validate } = await import("./validate.ts");
+  for (const { name, document, errors } of load("validation-messages.json")) {
+    assert.deepEqual(validate(document).errors, errors, `case: ${name}`);
+  }
+});
+
 test("verified-diff dialect fixtures reproduce (spec §5.2.2)", async () => {
   const { validate } = await import("./validate.ts");
   const { verifyAgainstBase } = await import("./verified-diff.ts");
