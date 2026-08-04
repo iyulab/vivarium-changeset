@@ -1,6 +1,6 @@
 # @vivariumjs/changeset — TypeScript reference SDK
 
-Construct, canonicalize, fingerprint, and validate [Vivarium Changeset](../../spec/SPEC.md)
+Construct, canonicalize, fingerprint, and validate [Vivarium Changeset](https://github.com/iyulab/vivarium-changeset/blob/main/spec/SPEC.md)
 documents. **Contains no apply logic** — appliers (e.g. vivarium-stage) are consumers of
 this format, not part of this SDK.
 
@@ -94,6 +94,6 @@ verdict.newContent; // exactly what the reviewer's diff described
 
 ## Conformance
 
-`npm test` runs the unit suite plus the shared [`spec/fixtures/`](../../spec/fixtures/)
+`npm test` runs the unit suite plus the shared [`spec/fixtures/`](https://github.com/iyulab/vivarium-changeset/tree/main/spec/fixtures)
 corpus. Independent implementations should reproduce those fixtures exactly;
 `npm run generate-fixtures` regenerates them from this reference implementation.
