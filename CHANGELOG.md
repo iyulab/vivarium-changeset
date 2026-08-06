@@ -5,6 +5,65 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) ·
 versioning: the spec and the reference SDKs version together while both
 are pre-1.0.
 
+## [0.3.0] — 2026-08-06
+
+> Published as `@vivariumjs/changeset@0.3.0` (npm) and
+> `Vivarium.Changeset 0.3.0` (NuGet), tags `ts-v0.3.0` / `dotnet-v0.3.0`.
+> Spec 0.3.0 is normative; both SDKs conform to it with byte-identical
+> fingerprints.
+
+### Added
+- **Spec §4 — `baseState.kind: "data"`**, symmetric with `schema`. A changeset that
+  changes data can now declare the data state it was authored against; before this it
+  could not, so a drift-detecting consumer had nothing to check and applied stale data
+  proposals without complaint. Gated on `specVersion` 0.3.0.
+- **Spec §5.3 — normative prose.** The section defined data operations by example only.
+  It now states the per-`op` required members, the closed `where` form, and the
+  literal-only rule the example implied.
+- **SDKs — `data` base entries raise the draft's `specVersion` to 0.3.0** at authoring
+  time, the same §9 minimality automation `verified-diff@0` already had.
+- **Conformance corpus — `spec/fixtures/data-patch.json`**, 12 vectors both SDKs run.
+- **Conformance corpus — `spec/fixtures/validation-messages.json`**, asserting the
+  exact, order-sensitive `{path, message}` list in both SDKs. The existing corpus only
+  compared the `valid` boolean, so message text could drift apart between the SDKs
+  unnoticed; it had.
+- **SDKs — `UI_PATCH_PROFILES` / `UiPatchProfiles`** names the closed `patches.ui[]`
+  profile vocabulary, which had no exported name.
+- **Spec — open item O-4**: finer `data` fingerprint granularity (per-entity, per-row).
+  0.3 fingerprints the facet as a whole.
+
+### Changed
+- **Tightened — data operation bodies (spec §5.3).** `op` was the only member the
+  validators checked; `entity`, `where`, `set`, and `values` were unvalidated, so a
+  malformed data patch passed validation, sealed into the fingerprint, and failed later
+  inside a backend write path. Operations now carry exactly their `op`'s members, and
+  `where` is closed to `{ field, equals: <literal> }`. The schema facet has always been
+  validated this way — one document should not hold two standards of rigor.
+  **Migration**: documents whose data operations use another shape are now invalid at
+  every supported `specVersion`. A tightening describes what was always malformed, so it
+  is not version-gated.
+
+- **SDKs — a rejection now names the vocabulary it is rejecting against.** Every
+  closed-vocabulary rejection enumerates the accepted values — `specVersion`,
+  `baseState.kind`, schema and data operations, logical types, UI patch profiles — so
+  `unsupported specVersion: "0.1"` became `unsupported specVersion: "0.1" (supported:
+  0.1.0, 0.2.0, 0.3.0)`, and the author sees the typo instead of guessing. The offending
+  value is rendered as JSON, so a string (`"0.1"`) is visibly distinct from a number
+  (`0.1`). No acceptance change: every document valid before is valid now.
+
+### Fixed
+- **SDKs — a `patches`/`provenance` member of the wrong type is no longer reported as
+  missing.** A member that is present but, say, an array collapsed into `... is
+  required`, which sends the author looking for something they already sent; it now
+  reads `... must be an object ...`. This also closed a divergence between the SDKs —
+  for `patches: [array]` the .NET SDK said `patches is required` while the TypeScript
+  SDK emitted unknown-member noise.
+- **SDKs — adding a `verified-diff@0` patch no longer lowers a draft's `specVersion`.**
+  It assigned `0.2.0` outright rather than raising a floor; on a draft that already
+  required more, the stamp would fall below what the document needs. Version gates are
+  now floors on both the authoring and the validating side (`verified-diff@0` requires
+  0.2.0 *or later*).
+
 ## [0.2.0] — 2026-07-19
 
 > Published as `@vivariumjs/changeset@0.2.0` (npm) and
