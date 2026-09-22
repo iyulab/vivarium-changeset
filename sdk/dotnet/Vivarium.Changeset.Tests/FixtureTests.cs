@@ -164,4 +164,65 @@ public class FixtureTests
             }
         }
     }
+    /// <summary>
+    /// The refusal subject ("outside the verified-diff dialect", "cannot canonicalize",
+    /// ...) is a literal duplicated in both SDKs. Two of the five were already locked by
+    /// the validation-message vectors; the other three could drift apart without anything
+    /// failing, because nothing compared them. These vectors compare them.
+    ///
+    /// Each op is the same probe on both sides. If the inputs ever diverge, the messages
+    /// diverge with them and this fails on one side — which is the point.
+    /// </summary>
+    [Fact]
+    public void RefusalSubjectsReproduceAcrossTheSdks()
+    {
+        foreach (var vector in Load("refusal-subjects.json").EnumerateArray())
+        {
+            var name = vector.GetProperty("name").GetString()!;
+            var op = vector.GetProperty("op").GetString()!;
+            var input = vector.TryGetProperty("input", out var i) ? i.GetString()! : "";
+
+            var thrown = Record.Exception(() => Probe(op, input, vector));
+            var error = Assert.IsAssignableFrom<ChangesetError>(thrown);
+
+            var expected = vector.GetProperty("errors").EnumerateArray()
+                .Select(e => (Path: e.GetProperty("path").GetString()!, Message: e.GetProperty("message").GetString()!))
+                .ToArray();
+            Assert.Equal(expected.Length, error.Errors.Count);
+            for (var k = 0; k < expected.Length; k++)
+            {
+                Assert.Equal(expected[k].Path, error.Errors[k].Path);
+                Assert.Equal(expected[k].Message, error.Errors[k].Message);
+            }
+
+            // The subject heads the rendered message; comparing the whole line keeps both
+            // the subject and the rendering locked, not just one of them.
+            var rendered = string.Join("\n", expected.Select(e =>
+                e.Path.Length == 0 ? $"  {e.Message}" : $"  {e.Path}: {e.Message}"));
+            Assert.Equal($"{vector.GetProperty("subject").GetString()}:\n{rendered}", error.Message);
+            Assert.NotNull(name);
+        }
+    }
+
+    private static void Probe(string op, string input, JsonElement vector)
+    {
+        switch (op)
+        {
+            case "verifiedDiff.parse":
+                VerifiedDiff.ParseStrict(input);
+                break;
+            case "unifiedDiff.apply":
+                UnifiedDiff.Apply(vector.GetProperty("base").GetString()!, input);
+                break;
+            case "fingerprint.verify":
+                ChangesetFingerprint.Verify(new JsonObject { ["fingerprint"] = input, ["intent"] = "x" });
+                break;
+            case "canonicalize.nonFinite":
+                JsonCanonicalizer.FormatNumber(double.NaN);
+                break;
+            default:
+                throw new Xunit.Sdk.XunitException($"unknown probe: {op}");
+        }
+    }
+
 }

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "verified-diff dialect: an empty diff",
+    "op": "verifiedDiff.parse",
+    "input": "",
+    "subject": "outside the verified-diff dialect",
+    "errors": [
+      { "path": "", "message": "empty diff: at least one hunk is required (no-op prohibition)" }
+    ]
+  },
+  {
+    "name": "unified-diff dialect: a line that is not a diff line",
+    "op": "unifiedDiff.apply",
+    "base": "a\nb\nc",
+    "input": "not a diff at all",
+    "subject": "outside the unified-diff dialect",
+    "errors": [
+      { "path": "", "message": "malformed diff line: \"not a diff at all\"" }
+    ]
+  },
+  {
+    "name": "fingerprint: a prefix this spec does not define",
+    "op": "fingerprint.verify",
+    "input": "md5:abc",
+    "subject": "cannot read fingerprint",
+    "errors": [
+      { "path": "$.fingerprint", "message": "unsupported fingerprint prefix: md5:" }
+    ]
+  },
+  {
+    "name": "canonicalization: a number I-JSON forbids",
+    "op": "canonicalize.nonFinite",
+    "subject": "cannot canonicalize",
+    "errors": [
+      { "path": "", "message": "I-JSON forbids NaN and Infinity (spec ADR-0001)" }
+    ]
+  }
+]
