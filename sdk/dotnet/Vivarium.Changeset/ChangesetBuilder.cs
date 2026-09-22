@@ -4,16 +4,14 @@ namespace Vivarium.Changeset;
 
 public sealed record BaseStateEntry(string Kind, string Ref, string Fingerprint);
 
-public sealed class ChangesetValidationException : Exception
-{
-    public IReadOnlyList<ValidationError> Errors { get; }
-
-    public ChangesetValidationException(IReadOnlyList<ValidationError> errors)
-        : base("changeset failed validation:\n" + string.Join("\n", errors.Select(e => $"  {e.Path}: {e.Message}")))
-    {
-        Errors = errors;
-    }
-}
+/// <summary>
+/// A whole document refused by the validator. One shape with every other refusal in
+/// this SDK — a dialect parse failure carries the same <see cref="ChangesetError.Errors"/>
+/// list — so a consumer handles "what went wrong and where" the same way whichever
+/// raised it.
+/// </summary>
+public sealed class ChangesetValidationException(IReadOnlyList<ValidationError> errors)
+    : ChangesetError(ChangesetErrorSubject.Validation, errors);
 
 /// <summary>
 /// Authoring helper. The builder's job is to make invalid documents hard to

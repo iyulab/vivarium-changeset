@@ -12,6 +12,10 @@ namespace Vivarium.Changeset;
 /// </summary>
 public static partial class UnifiedDiff
 {
+    /// <summary>Every refusal in this class names the dialect and where inside the diff it happened.</summary>
+    private static ChangesetError Bad(string path, string message) =>
+        ChangesetError.At(ChangesetErrorSubject.UnifiedDiff, path, message);
+
     private readonly record struct Op(char Kind, string Line);
 
     [GeneratedRegex(@"^@@ -(\d+),(\d+) \+(\d+),(\d+) @@")]
@@ -97,7 +101,7 @@ public static partial class UnifiedDiff
             }
             else if (raw != "")
             {
-                throw new FormatException($"malformed diff line: \"{raw}\"");
+                throw Bad("", $"malformed diff line: \"{raw}\"");
             }
         }
         return hunks;
@@ -113,14 +117,14 @@ public static partial class UnifiedDiff
         foreach (var h in Parse(diff))
         {
             var start = h.ACount == 0 ? h.AStart : h.AStart - 1;
-            if (start < pos) throw new InvalidOperationException("overlapping hunks");
+            if (start < pos) throw Bad("", "overlapping hunks");
             for (var i = pos; i < start; i++) outLines.Add(src[i]);
             pos = start;
             foreach (var o in h.Ops)
             {
                 if (o.Kind == '+') { outLines.Add(o.Line); continue; }
                 if (pos >= src.Length || src[pos] != o.Line)
-                    throw new InvalidOperationException($"diff does not match content at line {pos + 1}");
+                    throw Bad("", $"diff does not match content at line {pos + 1}");
                 if (o.Kind == ' ') outLines.Add(o.Line);
                 pos++;
             }

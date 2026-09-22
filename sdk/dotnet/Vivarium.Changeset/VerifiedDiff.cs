@@ -22,6 +22,10 @@ public sealed record VerifyAgainstBaseResult(bool Ok, string? NewContent, IReadO
 /// </summary>
 public static partial class VerifiedDiff
 {
+    /// <summary>Every refusal in this class names the dialect and where inside the diff it happened.</summary>
+    private static ChangesetError Bad(string path, string message) =>
+        ChangesetError.At(ChangesetErrorSubject.Dialect, path, message);
+
     private const string NoEofMarker = "\\ No newline at end of file";
 
     [GeneratedRegex(@"^@@ -(\d+),(\d+) \+(\d+),(\d+) @@$")]
@@ -63,7 +67,7 @@ public static partial class VerifiedDiff
     private static List<Hunk> Parse(string diff)
     {
         if (string.IsNullOrEmpty(diff))
-            throw new FormatException("empty diff: at least one hunk is required (no-op prohibition)");
+            throw Bad("", "empty diff: at least one hunk is required (no-op prohibition)");
         var raw = diff.Split('\n').ToList();
         if (raw[^1] == "") raw.RemoveAt(raw.Count - 1); // single trailing LF terminator
         var hunks = new List<Hunk>();
@@ -87,14 +91,14 @@ public static partial class VerifiedDiff
             }
             if (line == NoEofMarker)
             {
-                if (lastOp is null) throw new FormatException("no-newline marker without a preceding hunk line");
+                if (lastOp is null) throw Bad($"hunk[{hunks.Count - 1}]", "no-newline marker without a preceding hunk line");
                 if (lastOp.Kind == ' ') { lastOp.NoEofBase = true; lastOp.NoEofNew = true; }
                 else if (lastOp.Kind == '-') lastOp.NoEofBase = true;
                 else lastOp.NoEofNew = true;
                 lastOp = null; // a second consecutive marker is malformed
                 continue;
             }
-            if (cur is null) throw new FormatException($"content before first hunk header: \"{line}\"");
+            if (cur is null) throw Bad("", $"content before first hunk header: \"{line}\"");
             var kind = line.Length > 0 ? line[0] : '\0';
             if (kind is ' ' or '-' or '+')
             {
@@ -102,20 +106,21 @@ public static partial class VerifiedDiff
                 cur.Ops.Add(lastOp);
                 continue;
             }
-            throw new FormatException($"line outside the dialect (no file headers, no garbage): \"{line}\"");
+            throw Bad(cur is null ? "" : $"hunk[{hunks.Count - 1}]", $"line outside the dialect (no file headers, no garbage): \"{line}\"");
         }
-        if (hunks.Count == 0) throw new FormatException("no hunks found");
+        if (hunks.Count == 0) throw Bad("", "no hunks found");
         var prevEnd = 0; // 0-based exclusive end of the previous hunk's base range
-        foreach (var h in hunks)
+        for (var hi = 0; hi < hunks.Count; hi++)
         {
-            if (h.Ops.Count == 0) throw new FormatException("empty hunk");
+            var h = hunks[hi];
+            if (h.Ops.Count == 0) throw Bad($"hunk[{hi}]", "empty hunk");
             var aCount = h.Ops.Count(o => o.Kind != '+');
             var bCount = h.Ops.Count(o => o.Kind != '-');
             if (h.ACount != aCount || h.BCount != bCount)
-                throw new FormatException($"hunk header counts (-{h.ACount},+{h.BCount}) do not match body (-{aCount},+{bCount})");
-            if (h.ACount > 0 && h.AStart < 1) throw new FormatException("aStart must be >= 1 for non-empty base range");
+                throw Bad($"hunk[{hi}]", $"hunk header counts (-{h.ACount},+{h.BCount}) do not match body (-{aCount},+{bCount})");
+            if (h.ACount > 0 && h.AStart < 1) throw Bad($"hunk[{hi}]", "aStart must be >= 1 for non-empty base range");
             var start = h.ACount == 0 ? h.AStart : h.AStart - 1;
-            if (start < prevEnd) throw new FormatException("hunks must be ascending and non-overlapping");
+            if (start < prevEnd) throw Bad($"hunk[{hi}]", "hunks must be ascending and non-overlapping");
             prevEnd = start + h.ACount;
         }
         return hunks;
@@ -141,7 +146,7 @@ public static partial class VerifiedDiff
 
         void Emit(string line, bool incomplete)
         {
-            if (outNoEof) throw new InvalidOperationException("line after the no-newline marker on the new side");
+            if (outNoEof) throw Bad("", "line after the no-newline marker on the new side");
             outLines.Add(line);
             if (incomplete) outNoEof = true;
         }
@@ -149,7 +154,7 @@ public static partial class VerifiedDiff
         foreach (var h in hunks)
         {
             var start = h.ACount == 0 ? h.AStart : h.AStart - 1;
-            if (start > src.Lines.Count) throw new InvalidOperationException($"hunk at base line {h.AStart} starts beyond end of base");
+            if (start > src.Lines.Count) throw Bad("", $"hunk at base line {h.AStart} starts beyond end of base");
             while (pos < start)
             {
                 Emit(src.Lines[pos], src.NoEof && pos == src.Lines.Count - 1);
@@ -158,12 +163,12 @@ public static partial class VerifiedDiff
             foreach (var o in h.Ops)
             {
                 if (o.Kind == '+') { Emit(o.Line, o.NoEofNew); continue; }
-                if (pos >= src.Lines.Count) throw new InvalidOperationException("hunk extends past end of base");
+                if (pos >= src.Lines.Count) throw Bad("", "hunk extends past end of base");
                 if (src.Lines[pos] != o.Line)
-                    throw new InvalidOperationException($"base mismatch at line {pos + 1} (exact-match dialect; no fuzz)");
+                    throw Bad("", $"base mismatch at line {pos + 1} (exact-match dialect; no fuzz)");
                 var baseIncomplete = src.NoEof && pos == src.Lines.Count - 1;
                 if (baseIncomplete != o.NoEofBase)
-                    throw new InvalidOperationException($"newline state mismatch at base line {pos + 1}");
+                    throw Bad("", $"newline state mismatch at base line {pos + 1}");
                 if (o.Kind == ' ') Emit(o.Line, o.NoEofNew);
                 pos++;
             }
@@ -261,9 +266,16 @@ public static partial class VerifiedDiff
         {
             newContent = Apply(baseContent, Str(patch["diff"]) ?? "");
         }
-        catch (Exception e) when (e is FormatException or InvalidOperationException)
+        catch (ChangesetError e)
         {
-            errors.Add(new ValidationError("$.diff", $"diff does not apply to base: {e.Message}"));
+            // Same lift as the validator does: the dialect located the failure inside
+            // the diff, and splicing its rendered message into one line would throw
+            // that away.
+            // The framing is this layer's to add — the dialect cannot know it was
+            // asked to apply against a *declared base* (spec §8 layer 2). The
+            // location stays the dialect's, which is the part splicing destroyed.
+            errors.AddRange(e.Rebase("$.diff").Select(v =>
+                new ValidationError(v.Path, $"diff does not apply to base: {v.Message}")));
             return new VerifyAgainstBaseResult(false, null, errors);
         }
         if (ChangesetFingerprint.OfArtifact(newContent) != Str(patch["newFingerprint"]))

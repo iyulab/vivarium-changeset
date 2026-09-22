@@ -44,7 +44,7 @@ public static class ChangesetFingerprint
         if (document["fingerprint"] is not JsonValue v || !v.TryGetValue<string>(out var embedded))
             return false;
         if (!embedded.StartsWith(Prefix, StringComparison.Ordinal))
-            throw new ArgumentException($"unsupported fingerprint prefix: {embedded.Split(':')[0]}:");
+            throw ChangesetError.At(ChangesetErrorSubject.Fingerprint, "$.fingerprint", $"unsupported fingerprint prefix: {embedded.Split(':')[0]}:");
         return embedded == Of(document);
     }
 

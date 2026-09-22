@@ -1,6 +1,18 @@
 import { test } from "node:test";
+import { ChangesetError } from "./errors.ts";
 import assert from "node:assert/strict";
 import { fingerprintOf, stampFingerprint, verifyFingerprint } from "./fingerprint.ts";
+
+/** node:assert's throws() returns nothing, and the whole point here is the payload. */
+const refusal = (fn: () => unknown): ChangesetError => {
+  try {
+    fn();
+  } catch (e) {
+    if (e instanceof ChangesetError) return e;
+    throw e;
+  }
+  throw new Error('expected a ChangesetError');
+};
 
 const doc = () => ({
   specVersion: "0.1.0",
@@ -39,5 +51,8 @@ test("documents without a fingerprint do not verify", () => {
 
 test("unknown fingerprint prefixes are rejected, never guessed", () => {
   const bad = { ...doc(), fingerprint: "md5:abc" };
-  assert.throws(() => verifyFingerprint(bad), RangeError);
+  const e = refusal(() => verifyFingerprint(bad));
+  // The path says which member was unreadable — a caller does not have to work it
+  // out from a sentence.
+  assert.deepEqual(e.errors, [{ path: "$.fingerprint", message: "unsupported fingerprint prefix: md5:" }]);
 });

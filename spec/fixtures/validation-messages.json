@@ -4,8 +4,26 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "schema": [{ "op": "entity.remove", "entity": "loan", "explanation": "e" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": []
   },
@@ -14,11 +32,32 @@
     "document": {
       "specVersion": "0.1",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "schema": [{ "op": "entity.remove", "entity": "loan", "explanation": "e" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.specVersion", "message": "unsupported specVersion: \"0.1\" (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)" }
+      {
+        "path": "$.specVersion",
+        "message": "unsupported specVersion: \"0.1\" (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+      }
     ]
   },
   {
@@ -26,11 +65,24 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] },
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
       "patches": []
     },
     "errors": [
-      { "path": "$.patches", "message": "patches must be an object with facet keys (schema, ui, data)" }
+      {
+        "path": "$.patches",
+        "message": "patches must be an object with facet keys (schema, ui, data)"
+      }
     ]
   },
   {
@@ -38,10 +90,23 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.patches", "message": "patches is required" }
+      {
+        "path": "$.patches",
+        "message": "patches is required"
+      }
     ]
   },
   {
@@ -50,10 +115,21 @@
       "specVersion": "0.2.0",
       "intent": "x",
       "provenance": [],
-      "patches": { "schema": [{ "op": "entity.remove", "entity": "loan", "explanation": "e" }] }
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.provenance", "message": "provenance must be an object" }
+      {
+        "path": "$.provenance",
+        "message": "provenance must be an object"
+      }
     ]
   },
   {
@@ -61,10 +137,21 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "patches": { "schema": [{ "op": "entity.remove", "entity": "loan", "explanation": "e" }] }
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.provenance", "message": "provenance is required" }
+      {
+        "path": "$.provenance",
+        "message": "provenance is required"
+      }
     ]
   },
   {
@@ -72,11 +159,32 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "foo", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "schema": [{ "op": "entity.remove", "entity": "loan", "explanation": "e" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "foo",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.provenance.baseState[0].kind", "message": "unknown baseState kind: \"foo\" (supported: schema, ui-artifact, changeset, data; closed vocabulary, spec §4)" }
+      {
+        "path": "$.provenance.baseState[0].kind",
+        "message": "unknown baseState kind: \"foo\" (supported: schema, ui-artifact, changeset, data; closed vocabulary, spec §4)"
+      }
     ]
   },
   {
@@ -84,11 +192,32 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "data", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "schema": [{ "op": "entity.remove", "entity": "loan", "explanation": "e" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "data",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.provenance.baseState[0].kind", "message": "baseState kind \"data\" requires specVersion 0.3.0 or later (document declares \"0.2.0\")" }
+      {
+        "path": "$.provenance.baseState[0].kind",
+        "message": "baseState kind \"data\" requires specVersion 0.3.0 or later (document declares \"0.2.0\")"
+      }
     ]
   },
   {
@@ -96,11 +225,32 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "schema": [{ "op": "foo", "entity": "loan", "explanation": "e" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "foo",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.patches.schema[0].op", "message": "unknown schema operation: \"foo\" (supported: entity.create, entity.rename, entity.remove, field.add, field.rename, field.retype, field.remove, constraint.add, constraint.remove)" }
+      {
+        "path": "$.patches.schema[0].op",
+        "message": "unknown schema operation: \"foo\" (supported: entity.create, entity.rename, entity.remove, field.add, field.rename, field.retype, field.remove, constraint.add, constraint.remove)"
+      }
     ]
   },
   {
@@ -108,11 +258,38 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "schema": [{ "op": "entity.create", "entity": "loan", "fields": [{ "name": "f", "type": "foo" }], "explanation": "e" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.create",
+            "entity": "loan",
+            "fields": [
+              {
+                "name": "f",
+                "type": "foo"
+              }
+            ],
+            "explanation": "e"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.patches.schema[0]", "message": "unknown logical type: \"foo\" (supported: string, number, boolean, date, datetime, reference, json)" }
+      {
+        "path": "$.patches.schema[0]",
+        "message": "unknown logical type: \"foo\" (supported: string, number, boolean, date, datetime, reference, json)"
+      }
     ]
   },
   {
@@ -120,11 +297,36 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "data": [{ "id": "d", "explanation": "e", "operations": [{ "op": "foo" }] }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "data": [
+          {
+            "id": "d",
+            "explanation": "e",
+            "operations": [
+              {
+                "op": "foo"
+              }
+            ]
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.patches.data[0].operations[0].op", "message": "unknown data operation: \"foo\" (supported: insert, update, delete)" }
+      {
+        "path": "$.patches.data[0].operations[0].op",
+        "message": "unknown data operation: \"foo\" (supported: insert, update, delete)"
+      }
     ]
   },
   {
@@ -132,11 +334,174 @@
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
-      "provenance": { "producedBy": "a", "createdAt": "2026-01-01T00:00:00Z", "baseState": [{ "kind": "schema", "ref": "r", "fingerprint": "sha256:aaaa" }] },
-      "patches": { "ui": [{ "profile": "foo" }] }
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "ui": [
+          {
+            "profile": "foo"
+          }
+        ]
+      }
     },
     "errors": [
-      { "path": "$.patches.ui[0].profile", "message": "unknown UI patch profile: \"foo\" (supported: whole-artifact@0, verified-diff@0)" }
+      {
+        "path": "$.patches.ui[0].profile",
+        "message": "unknown UI patch profile: \"foo\" (supported: whole-artifact@0, verified-diff@0)"
+      }
+    ]
+  },
+  {
+    "name": "dialect failure is located inside the diff, not at the patch (BD-01 2 — lifted, not spliced)",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen",
+            "baseFingerprint": "sha256:aaaa",
+            "newFingerprint": "sha256:bbbb",
+            "diff": "@@ -1,2 +1,1 @@\n-a\n+b\n",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.patches.ui[0].diff.hunk[0]",
+        "message": "hunk header counts (-2,+1) do not match body (-1,+1)"
+      }
+    ]
+  },
+  {
+    "name": "dialect failure with no place inside the diff stays at the diff itself",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen",
+            "baseFingerprint": "sha256:aaaa",
+            "newFingerprint": "sha256:bbbb",
+            "diff": "",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.patches.ui[0].diff",
+        "message": "empty diff: at least one hunk is required (no-op prohibition)"
+      }
+    ]
+  },
+  {
+    "name": "dialect failure names which hunk (second one) — the location splicing used to discard",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen",
+            "baseFingerprint": "sha256:aaaa",
+            "newFingerprint": "sha256:bbbb",
+            "diff": "@@ -1,1 +1,1 @@\n-a\n+A\n@@ -1,1 +2,1 @@\n-a\n+B\n",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.patches.ui[0].diff.hunk[1]",
+        "message": "hunks must be ascending and non-overlapping"
+      }
+    ]
+  },
+  {
+    "name": "garbage outside the dialect is located at the hunk it appeared in",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "ui-artifact",
+            "ref": "screen",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "ui": [
+          {
+            "profile": "verified-diff@0",
+            "artifactId": "screen",
+            "baseFingerprint": "sha256:aaaa",
+            "newFingerprint": "sha256:bbbb",
+            "diff": "@@ -1,1 +1,1 @@\n-a\n+b\ngarbage\n",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.patches.ui[0].diff.hunk[0]",
+        "message": "line outside the dialect (no file headers, no garbage): \"garbage\""
+      }
     ]
   }
 ]

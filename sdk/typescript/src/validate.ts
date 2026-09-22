@@ -1,8 +1,10 @@
 import { reverseApplyUnifiedDiff } from "./diff.ts";
+import { ChangesetError } from "./errors.ts";
 import { artifactFingerprint, FINGERPRINT_PREFIX, fingerprintOf } from "./fingerprint.ts";
 import { parseVerifiedDiff } from "./verified-diff.ts";
 
-export interface ValidationError { path: string; message: string }
+export type { ValidationError } from "./errors.ts";
+import type { ValidationError } from "./errors.ts";
 export interface ValidationResult { valid: boolean; errors: ValidationError[] }
 
 export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0", "0.3.0", "0.4.0"];
@@ -194,8 +196,15 @@ export function validate(document: unknown): ValidationResult {
       }
       if (typeof p.diff !== "string") err(`${path}.diff`, "required string (the diff is the review surface)");
       else {
+        // Lift the dialect's own located failures into this list rather than
+        // splicing its sentence into one of ours. Splicing put every diff failure
+        // at `<patch>.diff` however deep inside the diff it happened, so a reader
+        // got the fact and not the place. `rebase` keeps the list flat.
         try { parseVerifiedDiff(p.diff); }
-        catch (e) { err(`${path}.diff`, `outside the verified-diff dialect: ${(e as Error).message}`); }
+        catch (e) {
+          if (!(e instanceof ChangesetError)) throw e;
+          for (const lifted of e.rebase(`${path}.diff`)) err(lifted.path, lifted.message);
+        }
       }
       return;
     }

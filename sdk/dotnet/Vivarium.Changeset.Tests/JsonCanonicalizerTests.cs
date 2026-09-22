@@ -37,8 +37,8 @@ public class JsonCanonicalizerTests
     [Fact]
     public void IJsonViolationsAreRejected()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => JsonCanonicalizer.FormatNumber(double.NaN));
-        Assert.Throws<ArgumentOutOfRangeException>(() => JsonCanonicalizer.FormatNumber(double.PositiveInfinity));
+        Assert.Throws<ChangesetError>(() => JsonCanonicalizer.FormatNumber(double.NaN));
+        Assert.Throws<ChangesetError>(() => JsonCanonicalizer.FormatNumber(double.PositiveInfinity));
     }
 
     [Fact]

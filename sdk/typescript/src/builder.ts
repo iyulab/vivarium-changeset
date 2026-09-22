@@ -7,7 +7,8 @@
 import { createUnifiedDiff } from "./diff.ts";
 import { createVerifiedDiff } from "./verified-diff.ts";
 import { artifactFingerprint, stampFingerprint } from "./fingerprint.ts";
-import { validate, SUPPORTED_SPEC_VERSIONS, type ValidationError } from "./validate.ts";
+import { validate, SUPPORTED_SPEC_VERSIONS } from "./validate.ts";
+import { ChangesetError, SUBJECT, type ValidationError } from "./errors.ts";
 
 export { artifactFingerprint } from "./fingerprint.ts";
 
@@ -20,11 +21,15 @@ export interface ChangesetDraft {
   patches: { schema: unknown[]; ui: unknown[]; data: unknown[] };
 }
 
-export class ChangesetValidationError extends Error {
-  readonly errors: ValidationError[];
+/**
+ * A whole document refused by {@link validate}. One shape with every other refusal
+ * in this SDK — a dialect parse failure carries the same `errors` list — so a
+ * consumer handles "what went wrong and where" the same way whichever raised it.
+ */
+export class ChangesetValidationError extends ChangesetError {
   constructor(errors: ValidationError[]) {
-    super("changeset failed validation:\n" + errors.map((e) => `  ${e.path}: ${e.message}`).join("\n"));
-    this.errors = errors;
+    super(SUBJECT.validation, errors);
+    this.name = "ChangesetValidationError";
   }
 }
 

@@ -225,7 +225,14 @@ public static class ChangesetValidator
                 else
                 {
                     try { VerifiedDiff.ParseStrict(vDiff); }
-                    catch (FormatException e) { Err($"{path}.diff", $"outside the verified-diff dialect: {e.Message}"); }
+                    // Lift the dialect's own located failures into this list rather than
+                    // splicing its sentence into one of ours. Splicing put every diff
+                    // failure at `<patch>.diff` however deep inside the diff it happened,
+                    // so a reader got the fact and not the place. Rebase keeps it flat.
+                    catch (ChangesetError e)
+                    {
+                        foreach (var lifted in e.Rebase($"{path}.diff")) Err(lifted.Path, lifted.Message);
+                    }
                 }
                 continue;
             }

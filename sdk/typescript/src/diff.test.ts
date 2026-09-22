@@ -1,6 +1,18 @@
 import { test } from "node:test";
+import { ChangesetError } from "./errors.ts";
 import assert from "node:assert/strict";
 import { applyUnifiedDiff, createUnifiedDiff, reverseApplyUnifiedDiff } from "./diff.ts";
+
+/** node:assert's throws() returns nothing, and the whole point here is the payload. */
+const refusal = (fn: () => unknown): ChangesetError => {
+  try {
+    fn();
+  } catch (e) {
+    if (e instanceof ChangesetError) return e;
+    throw e;
+  }
+  throw new Error('expected a ChangesetError');
+};
 
 const cases: Array<[string, string, string]> = [
   ["modification", "a\nb\nc\nd\ne\nf\ng", "a\nb\nX\nd\ne\nf\nG"],
@@ -26,5 +38,6 @@ test("identical content produces an empty diff", () => {
 
 test("mismatched diff refuses to apply", () => {
   const diff = createUnifiedDiff("a\nb\nc", "a\nB\nc");
-  assert.throws(() => applyUnifiedDiff("totally\ndifferent\nbase", diff), RangeError);
+  const e = refusal(() => applyUnifiedDiff("totally\ndifferent\nbase", diff));
+  assert.deepEqual(e.errors, [{ path: "", message: "diff does not match content at line 1" }]);
 });

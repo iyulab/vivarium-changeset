@@ -1,3 +1,7 @@
+import { ChangesetError, SUBJECT } from "./errors.ts";
+
+const bad = (path: string, message: string) => ChangesetError.at(SUBJECT.unifiedDiff, path, message);
+
 /**
  * Line-based unified diff: create, apply, reverse-apply.
  *
@@ -79,7 +83,7 @@ function parseDiff(diff: string): Hunk[] {
     } else if (cur && (raw.startsWith(" ") || raw.startsWith("-") || raw.startsWith("+"))) {
       cur.ops.push({ kind: raw[0] as Op["kind"], line: raw.slice(1) });
     } else if (raw !== "") {
-      throw new SyntaxError(`malformed diff line: ${JSON.stringify(raw)}`);
+      throw bad("", `malformed diff line: ${JSON.stringify(raw)}`);
     }
   }
   return hunks;
@@ -93,13 +97,13 @@ export function applyUnifiedDiff(base: string, diff: string): string {
   let pos = 0; // 0-based cursor into src
   for (const h of parseDiff(diff)) {
     const start = (h.aCount === 0 ? h.aStart : h.aStart - 1);
-    if (start < pos) throw new RangeError("overlapping hunks");
+    if (start < pos) throw bad("", "overlapping hunks");
     out.push(...src.slice(pos, start));
     pos = start;
     for (const o of h.ops) {
       if (o.kind === "+") { out.push(o.line); continue; }
       if (src[pos] !== o.line) {
-        throw new RangeError(`diff does not match content at line ${pos + 1}`);
+        throw bad("", `diff does not match content at line ${pos + 1}`);
       }
       if (o.kind === " ") out.push(o.line);
       pos++;

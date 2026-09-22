@@ -9,7 +9,9 @@ export {
 } from "./verified-diff.ts";
 export type { VerifiedDiffUiPatch, VerifyAgainstBaseResult } from "./verified-diff.ts";
 export { validate, SUPPORTED_SPEC_VERSIONS, BASE_STATE_KINDS } from "./validate.ts";
-export type { ValidationError, ValidationResult } from "./validate.ts";
+export type { ValidationResult } from "./validate.ts";
+export { ChangesetError, SUBJECT } from "./errors.ts";
+export type { ValidationError } from "./errors.ts";
 export {
   createChangeset,
   addSchemaOp,

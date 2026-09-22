@@ -1,6 +1,18 @@
 import { test } from "node:test";
+import { ChangesetError } from "./errors.ts";
 import assert from "node:assert/strict";
 import { canonicalize } from "./canonicalize.ts";
+
+/** node:assert's throws() returns nothing, and the whole point here is the payload. */
+const refusal = (fn: () => unknown): ChangesetError => {
+  try {
+    fn();
+  } catch (e) {
+    if (e instanceof ChangesetError) return e;
+    throw e;
+  }
+  throw new Error('expected a ChangesetError');
+};
 
 test("number serialization follows ES semantics (JCS normative form)", () => {
   assert.equal(canonicalize(4.5), "4.5");
@@ -29,11 +41,17 @@ test("nested structures canonicalize recursively", () => {
   );
 });
 
+// These used to assert the built-in type (RangeError / TypeError), which told a
+// caller nothing it could act on. What matters is that the refusal carries the
+// same located-failure list every other refusal in this SDK carries.
 test("I-JSON violations are rejected", () => {
-  assert.throws(() => canonicalize(Number.NaN), RangeError);
-  assert.throws(() => canonicalize(Infinity), RangeError);
+  for (const value of [Number.NaN, Infinity]) {
+    const e = refusal(() => canonicalize(value));
+    assert.deepEqual(e.errors, [{ path: "", message: "I-JSON forbids NaN and Infinity (spec ADR-0001)" }]);
+  }
 });
 
 test("non-JSON values are rejected", () => {
-  assert.throws(() => canonicalize(() => 1), TypeError);
+  const e = refusal(() => canonicalize(() => 1));
+  assert.deepEqual(e.errors, [{ path: "", message: "value is not JSON-representable: function" }]);
 });

@@ -53,13 +53,13 @@ public class UnifiedDiffTests
     public void MismatchedContextIsRefused()
     {
         var diff = UnifiedDiff.Create(Base, "line one\nCHANGED\nline three\nline four\nline five");
-        Assert.Throws<InvalidOperationException>(() => UnifiedDiff.Apply("totally\ndifferent\ncontent", diff));
+        Assert.Throws<ChangesetError>(() => UnifiedDiff.Apply("totally\ndifferent\ncontent", diff));
     }
 
     [Fact]
     public void MalformedDiffIsRefused()
     {
-        Assert.Throws<FormatException>(() => UnifiedDiff.Apply(Base, "not a diff at all"));
+        Assert.Throws<ChangesetError>(() => UnifiedDiff.Apply(Base, "not a diff at all"));
     }
 
     [Fact]

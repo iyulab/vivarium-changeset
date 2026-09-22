@@ -1,3 +1,5 @@
+import { ChangesetError, SUBJECT } from "./errors.ts";
+
 /**
  * RFC 8785 (JCS) canonicalization.
  *
@@ -14,7 +16,7 @@ export function canonicalize(value: unknown): string {
   }
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new RangeError("I-JSON forbids NaN and Infinity (spec ADR-0001)");
+      throw ChangesetError.at(SUBJECT.canonicalization, "", "I-JSON forbids NaN and Infinity (spec ADR-0001)");
     }
     return JSON.stringify(value);
   }
@@ -28,7 +30,7 @@ export function canonicalize(value: unknown): string {
       .sort(); // default sort = UTF-16 code unit order, as JCS requires
     return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalize(obj[k])).join(",") + "}";
   }
-  throw new TypeError(`value is not JSON-representable: ${typeof value}`);
+  throw ChangesetError.at(SUBJECT.canonicalization, "", `value is not JSON-representable: ${typeof value}`);
 }
 
 /** Canonical UTF-8 bytes — the exact input to the fingerprint hash. */

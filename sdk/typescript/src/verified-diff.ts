@@ -1,3 +1,8 @@
+import { ChangesetError, SUBJECT } from "./errors.ts";
+
+/** Every refusal in this module names the dialect and where inside the diff it happened. */
+const bad = (path: string, message: string) => ChangesetError.at(SUBJECT.dialect, path, message);
+
 /**
  * `verified-diff@0` dialect (spec §5.2.2): strict unified diff with exact
  * 1-based line numbers, no fuzz, no partial application, byte-faithful
@@ -34,11 +39,14 @@ interface Hunk { aStart: number; aCount: number; bStart: number; bCount: number;
 
 /**
  * Parse and structurally validate a verified-diff dialect string.
- * Throws SyntaxError on anything outside the dialect (spec: fail-closed).
+ * Throws {@link ChangesetError} on anything outside the dialect (spec: fail-closed).
+ * Each failure carries the place inside the diff that it happened, so a caller
+ * holding a wider document can lift it into its own error list (`rebase`) instead
+ * of splicing the sentence into one of its own.
  */
 export function parseVerifiedDiff(diff: string): Hunk[] {
   if (typeof diff !== "string" || diff === "") {
-    throw new SyntaxError("empty diff: at least one hunk is required (no-op prohibition)");
+    throw bad("", "empty diff: at least one hunk is required (no-op prohibition)");
   }
   const raw = diff.split("\n");
   if (raw[raw.length - 1] === "") raw.pop(); // single trailing LF terminator
@@ -54,35 +62,38 @@ export function parseVerifiedDiff(diff: string): Hunk[] {
       continue;
     }
     if (line === NO_EOF_MARKER) {
-      if (!lastOp) throw new SyntaxError("no-newline marker without a preceding hunk line");
+      if (!lastOp) throw bad(`hunk[${hunks.length - 1}]`, "no-newline marker without a preceding hunk line");
       if (lastOp.kind === " ") { lastOp.noEofBase = true; lastOp.noEofNew = true; }
       else if (lastOp.kind === "-") lastOp.noEofBase = true;
       else lastOp.noEofNew = true;
       lastOp = null; // a second consecutive marker is malformed
       continue;
     }
-    if (!cur) throw new SyntaxError(`content before first hunk header: ${JSON.stringify(line)}`);
+    if (!cur) throw bad("", `content before first hunk header: ${JSON.stringify(line)}`);
     const kind = line[0];
     if (kind === " " || kind === "-" || kind === "+") {
       lastOp = { kind, line: line.slice(1) };
       cur.ops.push(lastOp);
       continue;
     }
-    throw new SyntaxError(`line outside the dialect (no file headers, no garbage): ${JSON.stringify(line)}`);
+    throw bad(
+      cur === null ? "" : `hunk[${hunks.length - 1}]`,
+      `line outside the dialect (no file headers, no garbage): ${JSON.stringify(line)}`,
+    );
   }
-  if (hunks.length === 0) throw new SyntaxError("no hunks found");
+  if (hunks.length === 0) throw bad("", "no hunks found");
   // counts, ordering, overlap
   let prevEnd = 0; // 0-based exclusive end of the previous hunk's base range
-  for (const h of hunks) {
-    if (h.ops.length === 0) throw new SyntaxError("empty hunk");
+  for (const [i, h] of hunks.entries()) {
+    if (h.ops.length === 0) throw bad(`hunk[${i}]`, "empty hunk");
     const aCount = h.ops.filter((o) => o.kind !== "+").length;
     const bCount = h.ops.filter((o) => o.kind !== "-").length;
     if (h.aCount !== aCount || h.bCount !== bCount) {
-      throw new SyntaxError(`hunk header counts (-${h.aCount},+${h.bCount}) do not match body (-${aCount},+${bCount})`);
+      throw bad(`hunk[${i}]`, `hunk header counts (-${h.aCount},+${h.bCount}) do not match body (-${aCount},+${bCount})`);
     }
-    if (h.aCount > 0 && h.aStart < 1) throw new SyntaxError("aStart must be >= 1 for non-empty base range");
+    if (h.aCount > 0 && h.aStart < 1) throw bad(`hunk[${i}]`, "aStart must be >= 1 for non-empty base range");
     const start = h.aCount === 0 ? h.aStart : h.aStart - 1;
-    if (start < prevEnd) throw new SyntaxError("hunks must be ascending and non-overlapping");
+    if (start < prevEnd) throw bad(`hunk[${i}]`, "hunks must be ascending and non-overlapping");
     prevEnd = start + h.aCount;
   }
   return hunks;
@@ -100,26 +111,26 @@ export function applyVerifiedDiff(base: string, diff: string): string {
   let outNoEof = false;
   let pos = 0; // 0-based cursor into src.lines
   const emit = (line: string, incomplete: boolean) => {
-    if (outNoEof) throw new RangeError("line after the no-newline marker on the new side");
+    if (outNoEof) throw bad("", "line after the no-newline marker on the new side");
     out.push(line);
     if (incomplete) outNoEof = true;
   };
   for (const h of hunks) {
     const start = h.aCount === 0 ? h.aStart : h.aStart - 1;
-    if (start > src.lines.length) throw new RangeError(`hunk at base line ${h.aStart} starts beyond end of base`);
+    if (start > src.lines.length) throw bad("", `hunk at base line ${h.aStart} starts beyond end of base`);
     while (pos < start) {
       emit(src.lines[pos], src.noEof && pos === src.lines.length - 1);
       pos++;
     }
     for (const o of h.ops) {
       if (o.kind === "+") { emit(o.line, o.noEofNew === true); continue; }
-      if (pos >= src.lines.length) throw new RangeError("hunk extends past end of base");
+      if (pos >= src.lines.length) throw bad("", "hunk extends past end of base");
       if (src.lines[pos] !== o.line) {
-        throw new RangeError(`base mismatch at line ${pos + 1} (exact-match dialect; no fuzz)`);
+        throw bad("", `base mismatch at line ${pos + 1} (exact-match dialect; no fuzz)`);
       }
       const baseIncomplete = src.noEof && pos === src.lines.length - 1;
       if (baseIncomplete !== (o.noEofBase === true)) {
-        throw new RangeError(`newline state mismatch at base line ${pos + 1}`);
+        throw bad("", `newline state mismatch at base line ${pos + 1}`);
       }
       if (o.kind === " ") emit(o.line, o.noEofNew === true);
       pos++;
@@ -223,7 +234,15 @@ export function verifyAgainstBase(
   try {
     newContent = applyVerifiedDiff(baseContent, patch.diff);
   } catch (e) {
-    errors.push({ path: "$.diff", message: `diff does not apply to base: ${(e as Error).message}` });
+    // Same lift as the validator does: the dialect located the failure inside the
+    // diff, and splicing its rendered message into one line would throw that away.
+    if (!(e instanceof ChangesetError)) throw e;
+    // The framing is this layer's to add — the dialect cannot know it was asked to
+    // apply against a *declared base* (spec §8 layer 2). The location stays the
+    // dialect's, which is the part splicing used to destroy.
+    for (const lifted of e.rebase("$.diff")) {
+      errors.push({ path: lifted.path, message: `diff does not apply to base: ${lifted.message}` });
+    }
     return { ok: false, errors };
   }
   if (artifactFingerprint(newContent) !== patch.newFingerprint) {

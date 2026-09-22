@@ -1,3 +1,5 @@
+import { ChangesetError, SUBJECT } from "./errors.ts";
+
 import { createHash } from "node:crypto";
 import { canonicalBytes } from "./canonicalize.ts";
 
@@ -34,7 +36,7 @@ export function verifyFingerprint(document: Record<string, unknown>): boolean {
   const embedded = document["fingerprint"];
   if (typeof embedded !== "string") return false;
   if (!embedded.startsWith(FINGERPRINT_PREFIX)) {
-    throw new RangeError(`unsupported fingerprint prefix: ${embedded.split(":")[0]}:`);
+    throw ChangesetError.at(SUBJECT.fingerprint, "$.fingerprint", `unsupported fingerprint prefix: ${embedded.split(":")[0]}:`);
   }
   return embedded === fingerprintOf(document);
 }

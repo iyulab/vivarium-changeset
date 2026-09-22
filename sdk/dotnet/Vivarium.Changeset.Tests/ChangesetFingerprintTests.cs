@@ -49,7 +49,7 @@ public class ChangesetFingerprintTests
     {
         var doc = MinimalDocument();
         doc["fingerprint"] = "sha512:abc";
-        Assert.Throws<ArgumentException>(() => ChangesetFingerprint.Verify(doc));
+        Assert.Throws<ChangesetError>(() => ChangesetFingerprint.Verify(doc));
     }
 
     [Fact]

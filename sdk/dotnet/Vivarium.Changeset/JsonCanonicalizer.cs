@@ -82,7 +82,7 @@ public static class JsonCanonicalizer
                 sb.Append('}');
                 break;
             default:
-                throw new ArgumentException($"value is not JSON-representable: {value.ValueKind}");
+                throw ChangesetError.At(ChangesetErrorSubject.Canonicalization, "", $"value is not JSON-representable: {value.ValueKind}");
         }
     }
 
@@ -134,7 +134,7 @@ public static class JsonCanonicalizer
     internal static string FormatNumber(double d)
     {
         if (double.IsNaN(d) || double.IsInfinity(d))
-            throw new ArgumentOutOfRangeException(nameof(d), "I-JSON forbids NaN and Infinity (spec ADR-0001)");
+            throw ChangesetError.At(ChangesetErrorSubject.Canonicalization, "", "I-JSON forbids NaN and Infinity (spec ADR-0001)");
         if (d == 0) return "0"; // covers -0 per ECMAScript
         if (d < 0) return "-" + FormatNumber(-d);
 

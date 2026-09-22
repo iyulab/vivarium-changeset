@@ -60,26 +60,26 @@ public class VerifiedDiffTests
 
     [Fact]
     public void ApplyIsFailClosedOnContextMismatch() =>
-        Assert.Throws<InvalidOperationException>(() => VerifiedDiff.Apply("actual\n", "@@ -1,1 +1,1 @@\n-not-the-base\n+x\n"));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.Apply("actual\n", "@@ -1,1 +1,1 @@\n-not-the-base\n+x\n"));
 
     [Fact]
     public void ApplyIsFailClosedNoFuzz() =>
-        Assert.Throws<InvalidOperationException>(() => VerifiedDiff.Apply("a\nb\n", "@@ -2,1 +2,1 @@\n-a\n+A\n"));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.Apply("a\nb\n", "@@ -2,1 +2,1 @@\n-a\n+A\n"));
 
     [Fact]
     public void ApplyIsFailClosedOnNewlineStateMismatch() =>
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<ChangesetError>(
             () => VerifiedDiff.Apply("a\n", "@@ -1,1 +1,1 @@\n-a\n\\ No newline at end of file\n+b\n"));
 
     [Fact]
     public void ParseRejectsDialectViolations()
     {
-        Assert.Throws<FormatException>(() => VerifiedDiff.ParseStrict(""));
-        Assert.Throws<FormatException>(() => VerifiedDiff.ParseStrict("--- a\n+++ b\n@@ -1,1 +1,1 @@\n-a\n+b\n"));
-        Assert.Throws<FormatException>(() => VerifiedDiff.ParseStrict("@@ -1,1 +1,1 @@\n-a\n+b\ngarbage\n"));
-        Assert.Throws<FormatException>(() => VerifiedDiff.ParseStrict("@@ -1,2 +1,1 @@\n-a\n+b\n"));
-        Assert.Throws<FormatException>(() => VerifiedDiff.ParseStrict("@@ -1,1 +1,1 @@\n-a\n+A\n@@ -1,1 +2,1 @@\n-a\n+B\n"));
-        Assert.Throws<FormatException>(() => VerifiedDiff.ParseStrict("@@ -1 +1 @@\n-a\n+b\n"));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.ParseStrict(""));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.ParseStrict("--- a\n+++ b\n@@ -1,1 +1,1 @@\n-a\n+b\n"));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.ParseStrict("@@ -1,1 +1,1 @@\n-a\n+b\ngarbage\n"));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.ParseStrict("@@ -1,2 +1,1 @@\n-a\n+b\n"));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.ParseStrict("@@ -1,1 +1,1 @@\n-a\n+A\n@@ -1,1 +2,1 @@\n-a\n+B\n"));
+        Assert.Throws<ChangesetError>(() => VerifiedDiff.ParseStrict("@@ -1 +1 @@\n-a\n+b\n"));
     }
 
     [Fact]
