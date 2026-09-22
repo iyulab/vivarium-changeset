@@ -1,10 +1,10 @@
 # Vivarium Changeset Specification
 
-**Version: 0.3.0** · Status: normative. The spec carries no separate version
+**Version: 0.4.0** · Status: normative. The spec carries no separate version
 tag: release tags name their artifact (`ts-v*` / `dotnet-v*`), because one
 shared tag coupled the two registries. Differences from the preceding minors
-are listed in [Changes from 0.2.0](#changes-from-020) and
-[Changes from 0.1.0](#changes-from-010).
+are listed in [Changes from 0.3.0](#changes-from-030),
+[Changes from 0.2.0](#changes-from-020) and [Changes from 0.1.0](#changes-from-010).
 
 The key words MUST, MUST NOT, SHOULD, MAY are to be interpreted as in RFC 2119.
 
@@ -268,6 +268,57 @@ MUST NOT hold two standards of rigor.
 *(Open item O-2: transformation expressions and richer predicates are deferred until
 demand proves out.)*
 
+### 5.4 Applying one document — order, and what a removal takes with it
+
+A changeset is applied as one unit (§7), but its facets are not independent: a data
+operation can only mean something against a particular schema. Through 0.3.0 this spec
+said nothing about which schema that is, and the gap was not academic — it decides
+whether "retire this field and clear it everywhere" is one coherent change or a
+contradiction. Independent implementations were each guessing, consistently by
+accident rather than by contract.
+
+**Order.** Within one document, a consumer MUST apply:
+
+1. **schema operations that add** — `entity.create`, `field.add`, `constraint.add`;
+2. then **data operations** (§5.3);
+3. then **schema operations that remove** — `field.remove`, `entity.remove`,
+   `constraint.remove`.
+
+This is the expand-then-contract shape every schema migration converges on, and both
+halves earn their place. Adding first is what lets one document create an entity and
+populate it, or add a field and backfill it — the data operations address a schema the
+same document just widened. Removing last is what lets one document address a field on
+its way out: the rows are still there to be read, selected, and rewritten while the
+data operations run, and the column goes afterwards. Reverse either half and an
+ordinary change becomes unexpressible.
+
+UI patches (§5.2) are not ordered against the other two. They address artifacts, not
+rows, so nothing observable depends on where they fall.
+
+**What `field.remove` and `entity.remove` take with them.** A removal MUST carry away
+the values stored under what it removes: after `field.remove`, no row of that entity
+retains a member of that name; after `entity.remove`, no rows of that entity remain.
+A consumer MUST NOT leave values behind under a name the schema no longer declares.
+The alternative — dropping the declaration and keeping the cells — produces rows
+carrying members that nothing in the schema explains, which no later document can
+address, because every operation in this vocabulary names a declared field.
+
+It follows that clearing a field's values before removing it in the same document is
+**permitted but unnecessary**: a producer MAY emit those writes (they are ordinary
+data operations against a schema that still declares the field), and a consumer MUST
+reach the same final state whether or not it does.
+
+**Applies to every document.** This clause states what a consumer does with the
+vocabulary; it adds no member and no feature, so it binds documents of every
+`specVersion`, and a 0.3.0-stamped document is unaffected in shape or stamping (§9).
+
+*(Open item O-5: `field.rename`, `field.retype` and `entity.rename` are ordered by
+neither half above — a rename both removes a name and adds one. No fixture or
+production document has yet combined them with data operations in a single document,
+so the ordering is left open rather than guessed at. Until it is settled, a producer
+SHOULD NOT put a rename or retype in the same document as data operations that
+address the renamed or retyped target.)*
+
 ## 6. Fingerprint
 
 1. Take the document with the `fingerprint` and `approvals` members removed.
@@ -330,6 +381,18 @@ feature on its version — `verified-diff@0` on 0.2 (§5.2.2), `baseState.kind: 
 on 0.3 (§4). Tightenings are never gated: a rule about what was always malformed
 applies at every version a validator supports.
 
+## Changes from 0.3.0
+
+- **Facet application order, and removal semantics (§5.4, MUST)**. A document's
+  additive schema operations apply before its data operations, and its removing schema
+  operations after them; a removal carries away the values stored under what it
+  removes. Both were previously unstated, which left "retire this field and clear it
+  everywhere" resting on each consumer's private assumption. The clause constrains
+  consumers, not documents: nothing about a document's shape or stamping changes, and
+  0.3.0-stamped documents are governed by it like any other (§9).
+- **Open item O-5** records what §5.4 deliberately does not settle — where a rename or
+  retype falls relative to data operations.
+
 ## Changes from 0.2.0
 
 - **Added — `baseState.kind: "data"` (§4)**: additive vocabulary, gated on
@@ -376,6 +439,9 @@ applies at every version a validator supports.
 - **O-3** ~~Conformance fixtures directory (`fixtures/`)~~ — resolved: populated since
   the 0.1 reference SDKs; 0.2 adds the `verified-diff@0` dialect corpus, 0.3 the data
   patch corpus.
+- **O-5** Ordering of `field.rename` / `field.retype` / `entity.rename` against data
+  operations in the same document (§5.4). A rename is additive and removing at once,
+  so neither phase claims it. Left open until a document that needs both appears.
 - **O-4** Finer `data` base granularity (§4). 0.3 fingerprints the data facet as a
   whole, so any data change drifts every data-declaring proposal. Per-entity or per-row
   units would narrow that, at the cost of an adapter contract for computing them —

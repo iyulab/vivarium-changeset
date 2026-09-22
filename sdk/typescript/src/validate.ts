@@ -5,7 +5,7 @@ import { parseVerifiedDiff } from "./verified-diff.ts";
 export interface ValidationError { path: string; message: string }
 export interface ValidationResult { valid: boolean; errors: ValidationError[] }
 
-export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0", "0.3.0"];
+export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0", "0.3.0", "0.4.0"];
 
 /** Closed `baseState.kind` vocabulary (spec §4). `data` is gated on 0.3.0. */
 export const BASE_STATE_KINDS = ["schema", "ui-artifact", "changeset", "data"];

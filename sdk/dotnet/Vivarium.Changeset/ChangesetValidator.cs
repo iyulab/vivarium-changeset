@@ -15,7 +15,7 @@ public sealed record ValidationResult(bool Valid, IReadOnlyList<ValidationError>
 public static class ChangesetValidator
 {
     /// <summary>Supported spec versions, ordered ascending — position is precedence.</summary>
-    public static readonly string[] SupportedSpecVersions = ["0.1.0", "0.2.0", "0.3.0"];
+    public static readonly string[] SupportedSpecVersions = ["0.1.0", "0.2.0", "0.3.0", "0.4.0"];
 
     /// <summary>Closed <c>baseState.kind</c> vocabulary (spec §4). <c>data</c> is gated on 0.3.0.</summary>
     public static readonly string[] BaseStateKinds = ["schema", "ui-artifact", "changeset", "data"];
