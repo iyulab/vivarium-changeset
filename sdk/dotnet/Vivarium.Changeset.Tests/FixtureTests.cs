@@ -90,6 +90,9 @@ public class FixtureTests
         // produces is part of the contract — the validation error surface is the
         // spec-delivery channel for authoring agents. This fixture is byte-identical
         // across the .NET and TypeScript SDKs; the assertion is order-sensitive.
+        // Every mismatch is reported, not just the first — a parity break usually
+        // spans several cases, and the first alone hides which rule diverged.
+        var mismatches = new List<string>();
         foreach (var vector in Load("validation-messages.json").EnumerateArray())
         {
             var name = vector.GetProperty("name").GetString();
@@ -98,10 +101,12 @@ public class FixtureTests
                 .Select(e => (Path: e.GetProperty("path").GetString()!, Message: e.GetProperty("message").GetString()!))
                 .ToList();
             var actual = result.Errors.Select(e => (e.Path, e.Message)).ToList();
-            Assert.True(expected.SequenceEqual(actual),
-                $"case: {name}\n  expected: {string.Join(" | ", expected.Select(e => $"{e.Path}: {e.Message}"))}" +
-                $"\n  actual:   {string.Join(" | ", actual.Select(e => $"{e.Path}: {e.Message}"))}");
+            if (!expected.SequenceEqual(actual))
+                mismatches.Add(
+                    $"case: {name}\n  expected: {string.Join(" | ", expected.Select(e => $"{e.Path}: {e.Message}"))}" +
+                    $"\n  actual:   {string.Join(" | ", actual.Select(e => $"{e.Path}: {e.Message}"))}");
         }
+        Assert.True(mismatches.Count == 0, string.Join("\n", mismatches));
     }
 
     [Fact]

@@ -503,5 +503,498 @@
         "message": "line outside the dialect (no file headers, no garbage): \"garbage\""
       }
     ]
+  },
+  {
+    "name": "createdAt not a date-time — names the expected form (Class A + B2, spec §4)",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "last tuesday",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.provenance.createdAt",
+        "message": "not an RFC 3339 date-time: \"last tuesday\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §4)"
+      }
+    ]
+  },
+  {
+    "name": "createdAt with a space separator — outside the RFC 3339 grammar",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01 00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.provenance.createdAt",
+        "message": "not an RFC 3339 date-time: \"2026-01-01 00:00:00Z\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §4)"
+      }
+    ]
+  },
+  {
+    "name": "createdAt without an offset — local time is not RFC 3339",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.provenance.createdAt",
+        "message": "not an RFC 3339 date-time: \"2026-01-01T00:00:00\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §4)"
+      }
+    ]
+  },
+  {
+    "name": "createdAt on a day the calendar lacks (2026-02-29) — §5.7 restriction",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-02-29T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.provenance.createdAt",
+        "message": "not an RFC 3339 date-time: \"2026-02-29T00:00:00Z\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §4)"
+      }
+    ]
+  },
+  {
+    "name": "createdAt with a trailing newline — the end anchor admits nothing after the offset",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z\n",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.provenance.createdAt",
+        "message": "not an RFC 3339 date-time: \"2026-01-01T00:00:00Z\\n\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §4)"
+      }
+    ]
+  },
+  {
+    "name": "createdAt in non-ASCII digits — ASCII only; quoting keeps them verbatim",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "٢٠٢٦-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.provenance.createdAt",
+        "message": "not an RFC 3339 date-time: \"٢٠٢٦-01-01T00:00:00Z\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §4)"
+      }
+    ]
+  },
+  {
+    "name": "RFC 3339 forms accepted — lowercase t/z, fraction, numeric offset, leap day, leap second",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2024-02-29t23:59:60.123456z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      },
+      "approvals": [
+        {
+          "fingerprint": "sha256:aaaa",
+          "approvedBy": "r",
+          "approvedAt": "2026-07-16T01:00:00+09:00"
+        },
+        {
+          "fingerprint": "sha256:aaaa",
+          "approvedBy": "r",
+          "approvedAt": "2000-02-29T00:00:00.5-00:00"
+        }
+      ]
+    },
+    "errors": []
+  },
+  {
+    "name": "approvedAt out of range with a numeric offset — '+' is quoted verbatim (spec §7)",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      },
+      "approvals": [
+        {
+          "fingerprint": "sha256:aaaa",
+          "approvedBy": "r",
+          "approvedAt": "2026-07-16T25:00:00+09:00"
+        }
+      ]
+    },
+    "errors": [
+      {
+        "path": "$.approvals[0].approvedAt",
+        "message": "not an RFC 3339 date-time: \"2026-07-16T25:00:00+09:00\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §7)"
+      }
+    ]
+  },
+  {
+    "name": "approvedAt not a string — required, distinct from malformed",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      },
+      "approvals": [
+        {
+          "fingerprint": "sha256:aaaa",
+          "approvedBy": "r",
+          "approvedAt": 20260716
+        }
+      ]
+    },
+    "errors": [
+      {
+        "path": "$.approvals[0].approvedAt",
+        "message": "required RFC 3339 string"
+      }
+    ]
+  },
+  {
+    "name": "quoting parity — characters one platform encoder escapes and the other does not",
+    "document": {
+      "specVersion": "0.1+rc<1>&'é😀 ",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.specVersion",
+        "message": "unsupported specVersion: \"0.1+rc<1>&'é😀 \" (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+      }
+    ]
+  },
+  {
+    "name": "quoting parity — a number is rendered as its value, not its source spelling",
+    "document": {
+      "specVersion": 1.0,
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.specVersion",
+        "message": "unsupported specVersion: 1 (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+      }
+    ]
+  },
+  {
+    "name": "quoting parity — explicit null is null, not undefined",
+    "document": {
+      "specVersion": null,
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.specVersion",
+        "message": "unsupported specVersion: null (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+      }
+    ]
+  },
+  {
+    "name": "quoting parity — object key order and number forms follow JSON.stringify",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": {
+              "1": 2,
+              "b": 1,
+              "a": [
+                1E21,
+                -0.0,
+                1.0e-6,
+                10e-8
+              ]
+            },
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.provenance.baseState[0].kind",
+        "message": "unknown baseState kind: {\"1\":2,\"b\":1,\"a\":[1e+21,0,0.000001,1e-7]} (supported: schema, ui-artifact, changeset, data; closed vocabulary, spec §4)"
+      }
+    ]
+  },
+  {
+    "name": "field.add with a falsy non-null field — still checked (both SDKs)",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "field.add",
+            "entity": "loan",
+            "field": 0,
+            "explanation": "e"
+          }
+        ]
+      }
+    },
+    "errors": [
+      {
+        "path": "$.patches.schema[0]",
+        "message": "unknown logical type: undefined (supported: string, number, boolean, date, datetime, reference, json)"
+      }
+    ]
   }
 ]

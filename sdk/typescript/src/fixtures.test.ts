@@ -61,9 +61,16 @@ test("data patch fixtures reproduce (spec §5.3 + §4 data kind, 0.3)", async ()
 // and TypeScript SDKs; the assertion is order-sensitive.
 test("validation-message fixtures reproduce exact error lists", async () => {
   const { validate } = await import("./validate.ts");
+  // Every mismatch is reported, not just the first — a parity break usually
+  // spans several cases, and the first alone hides which rule diverged.
+  const mismatches: string[] = [];
   for (const { name, document, errors } of load("validation-messages.json")) {
-    assert.deepEqual(validate(document).errors, errors, `case: ${name}`);
+    const actual = validate(document).errors;
+    if (JSON.stringify(actual) !== JSON.stringify(errors)) {
+      mismatches.push(`case: ${name}\n  expected: ${JSON.stringify(errors)}\n  actual:   ${JSON.stringify(actual)}`);
+    }
   }
+  assert.equal(mismatches.length, 0, mismatches.join("\n"));
 });
 
 test("verified-diff dialect fixtures reproduce (spec §5.2.2)", async () => {

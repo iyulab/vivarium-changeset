@@ -2,6 +2,7 @@ import { reverseApplyUnifiedDiff } from "./diff.ts";
 import { ChangesetError } from "./errors.ts";
 import { artifactFingerprint, FINGERPRINT_PREFIX, fingerprintOf } from "./fingerprint.ts";
 import { parseVerifiedDiff } from "./verified-diff.ts";
+import { isRfc3339DateTime, RFC3339_FORM } from "./timestamp.ts";
 
 export type { ValidationError } from "./errors.ts";
 import type { ValidationError } from "./errors.ts";
@@ -71,6 +72,13 @@ export function validate(document: unknown): ValidationResult {
   // across SDKs. (Absent → "undefined"; explicit null keeps its JSON form "null".)
   const jsonRepr = (v: unknown) => (v === undefined ? "undefined" : JSON.stringify(v));
 
+  // Timestamps are checked as RFC 3339 grammar (./timestamp.ts), not by a
+  // platform date parser — the refusal names the form it expects (Class A).
+  const checkTimestamp = (v: unknown, path: string, section: string) => {
+    if (typeof v !== "string") err(path, "required RFC 3339 string");
+    else if (!isRfc3339DateTime(v)) err(path, `not an RFC 3339 date-time: ${jsonRepr(v)} (expected ${RFC3339_FORM}, ${section})`);
+  };
+
   checkMembers(doc, ["specVersion", "id", "intent", "provenance", "patches", "fingerprint", "approvals"], "$");
 
   if (!SUPPORTED_SPEC_VERSIONS.includes(doc.specVersion as string)) {
@@ -90,7 +98,7 @@ export function validate(document: unknown): ValidationResult {
   else {
     checkMembers(prov, ["producedBy", "createdAt", "baseState", "editContext"], "$.provenance");
     if (typeof prov.producedBy !== "string") err("$.provenance.producedBy", "required string");
-    if (typeof prov.createdAt !== "string") err("$.provenance.createdAt", "required RFC 3339 string");
+    checkTimestamp(prov.createdAt, "$.provenance.createdAt", "spec §4");
     if (!Array.isArray(prov.baseState)) err("$.provenance.baseState", "required array");
     else (prov.baseState as unknown[]).forEach((entry, i) => {
       const path = `$.provenance.baseState[${i}]`;
@@ -160,7 +168,7 @@ export function validate(document: unknown): ValidationResult {
     if (typeof p.explanation !== "string" || p.explanation === "") err(`${path}.explanation`, "explanation required");
     if (p.op === "entity.create" && !Array.isArray(p.fields)) err(`${path}.fields`, "must be an array");
     const fields = p.op === "entity.create" && Array.isArray(p.fields) ? (p.fields as unknown[]) :
-      p.op === "field.add" && p.field ? [p.field] : [];
+      p.op === "field.add" && p.field !== undefined && p.field !== null ? [p.field] : [];
     for (const f of fields) {
       const ftype = isRecord(f) ? f.type : undefined;
       if (!LOGICAL_TYPES.includes(ftype as string)) err(`${path}`, `unknown logical type: ${jsonRepr(ftype)} ${supported(LOGICAL_TYPES)}`);
@@ -276,7 +284,7 @@ export function validate(document: unknown): ValidationResult {
       checkMembers(a, ["fingerprint", "approvedBy", "approvedAt", "comment", "attestation"], `$.approvals[${i}]`);
       if (typeof a.fingerprint !== "string") err(`$.approvals[${i}].fingerprint`, "required string");
       if (typeof a.approvedBy !== "string") err(`$.approvals[${i}].approvedBy`, "required string");
-      if (typeof a.approvedAt !== "string") err(`$.approvals[${i}].approvedAt`, "required RFC 3339 string");
+      checkTimestamp(a.approvedAt, `$.approvals[${i}].approvedAt`, "spec §7");
     });
   }
 

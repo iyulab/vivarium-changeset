@@ -71,6 +71,15 @@ public static class ChangesetValidator
                 if (!allowed.Contains(k)) Err($"{path}.{k}", "unknown member (closed model, spec §2)");
         }
 
+        // Timestamps are checked as RFC 3339 grammar (Rfc3339), not by a platform
+        // date parser — the refusal names the form it expects (Class A).
+        void CheckTimestamp(JsonObject obj, string key, string path, string section)
+        {
+            if (!TryString(obj[key], out var ts)) Err(path, "required RFC 3339 string");
+            else if (!Rfc3339.IsDateTime(ts))
+                Err(path, $"not an RFC 3339 date-time: {JsRepr.Member(obj, key)} (expected {Rfc3339.Form}, {section})");
+        }
+
         static bool TryString(JsonNode? n, out string s)
         {
             if (n is JsonValue v && v.TryGetValue(out string? inner)) { s = inner; return true; }
@@ -106,7 +115,7 @@ public static class ChangesetValidator
         CheckMembers(doc, ["specVersion", "id", "intent", "provenance", "patches", "fingerprint", "approvals"], "$");
 
         if (!TryString(doc["specVersion"], out var specVersion) || !SupportedSpecVersions.Contains(specVersion))
-            Err("$.specVersion", $"unsupported specVersion: {doc["specVersion"]?.ToJsonString() ?? "undefined"} {Supported(SupportedSpecVersions)}");
+            Err("$.specVersion", $"unsupported specVersion: {JsRepr.Member(doc, "specVersion")} {Supported(SupportedSpecVersions)}");
         // SupportedSpecVersions is ordered ascending, so position is precedence.
         // Version-gated *features* use this (spec §9); tightenings never do.
         var declared = Array.IndexOf(SupportedSpecVersions, specVersion);
@@ -121,7 +130,7 @@ public static class ChangesetValidator
         {
             CheckMembers(prov, ["producedBy", "createdAt", "baseState", "editContext"], "$.provenance");
             if (!TryString(prov["producedBy"], out _)) Err("$.provenance.producedBy", "required string");
-            if (!TryString(prov["createdAt"], out _)) Err("$.provenance.createdAt", "required RFC 3339 string");
+            CheckTimestamp(prov, "createdAt", "$.provenance.createdAt", "spec §4");
             if (prov["baseState"] is not JsonArray baseState) Err("$.provenance.baseState", "required array");
             else
                 for (var i = 0; i < baseState.Count; i++)
@@ -134,9 +143,9 @@ public static class ChangesetValidator
                     }
                     CheckMembers(entry, ["kind", "ref", "fingerprint"], path);
                     if (!TryString(entry["kind"], out var kind) || !BaseStateKinds.Contains(kind))
-                        Err($"{path}.kind", $"unknown baseState kind: {entry["kind"]?.ToJsonString() ?? "undefined"} {Supported(BaseStateKinds, "closed vocabulary, spec §4")}");
+                        Err($"{path}.kind", $"unknown baseState kind: {JsRepr.Member(entry, "kind")} {Supported(BaseStateKinds, "closed vocabulary, spec §4")}");
                     else if (kind == "data" && !AtLeast("0.3.0"))
-                        Err($"{path}.kind", $"baseState kind \"data\" requires specVersion 0.3.0 or later (document declares {doc["specVersion"]?.ToJsonString() ?? "undefined"})");
+                        Err($"{path}.kind", $"baseState kind \"data\" requires specVersion 0.3.0 or later (document declares {JsRepr.Member(doc, "specVersion")})");
                     if (!TryString(entry["ref"], out var entryRef) || entryRef == "")
                         Err($"{path}.ref", "required non-empty string");
                     if (!TryString(entry["fingerprint"], out var entryFp) || !entryFp.StartsWith(ChangesetFingerprint.Prefix, StringComparison.Ordinal))
@@ -174,7 +183,7 @@ public static class ChangesetValidator
             if (schema[i] is not JsonObject p) { Err(path, "must be an object"); continue; }
             if (!TryString(p["op"], out var op) || !SchemaOps.TryGetValue(op, out var allowed))
             {
-                Err($"{path}.op", $"unknown schema operation: {p["op"]?.ToJsonString() ?? "undefined"} {Supported(SchemaOps.Keys)}");
+                Err($"{path}.op", $"unknown schema operation: {JsRepr.Member(p, "op")} {Supported(SchemaOps.Keys)}");
                 continue;
             }
             CheckMembers(p, allowed, path);
@@ -189,12 +198,12 @@ public static class ChangesetValidator
             {
                 var ftype = (f as JsonObject)?["type"];
                 if (!TryString(ftype, out var t) || !LogicalTypes.Contains(t))
-                    Err(path, $"unknown logical type: {ftype?.ToJsonString() ?? "undefined"} {Supported(LogicalTypes)}");
+                    Err(path, $"unknown logical type: {JsRepr.Member(f as JsonObject, "type")} {Supported(LogicalTypes)}");
                 else if (t == "reference" && !TryString((f as JsonObject)?["target"], out _))
                     Err(path, "reference type requires target");
             }
             if (op == "field.retype" && (!TryString(p["newType"], out var nt) || !LogicalTypes.Contains(nt)))
-                Err($"{path}.newType", $"unknown logical type: {p["newType"]?.ToJsonString() ?? "undefined"} {Supported(LogicalTypes)}");
+                Err($"{path}.newType", $"unknown logical type: {JsRepr.Member(p, "newType")} {Supported(LogicalTypes)}");
         }
 
         for (var i = 0; i < ui.Count; i++)
@@ -205,7 +214,7 @@ public static class ChangesetValidator
             {
                 if (!AtLeast("0.2.0"))
                 {
-                    Err($"{path}.profile", $"verified-diff@0 requires specVersion 0.2.0 or later (document declares {doc["specVersion"]?.ToJsonString() ?? "undefined"})");
+                    Err($"{path}.profile", $"verified-diff@0 requires specVersion 0.2.0 or later (document declares {JsRepr.Member(doc, "specVersion")})");
                     continue;
                 }
                 CheckMembers(p, ["profile", "artifactId", "baseFingerprint", "diff", "newFingerprint", "explanation"], path);
@@ -239,7 +248,7 @@ public static class ChangesetValidator
             CheckMembers(p, ["profile", "artifactId", "baseFingerprint", "newContent", "reviewDiff", "explanation"], path);
             if (!TryString(p["profile"], out var profile) || profile != "whole-artifact@0")
             {
-                Err($"{path}.profile", $"unknown UI patch profile: {p["profile"]?.ToJsonString() ?? "undefined"} {Supported(UiPatchProfiles)}");
+                Err($"{path}.profile", $"unknown UI patch profile: {JsRepr.Member(p, "profile")} {Supported(UiPatchProfiles)}");
                 continue;
             }
             if (!TryString(p["artifactId"], out _)) Err($"{path}.artifactId", "required string");
@@ -293,7 +302,7 @@ public static class ChangesetValidator
                     if (operations[j] is not JsonObject op) { Err(opPath, "must be an object"); continue; }
                     if (!TryString(op["op"], out var dop) || !DataOps.TryGetValue(dop, out var allowed))
                     {
-                        Err($"{opPath}.op", $"unknown data operation: {op["op"]?.ToJsonString() ?? "undefined"} {Supported(DataOps.Keys)}");
+                        Err($"{opPath}.op", $"unknown data operation: {JsRepr.Member(op, "op")} {Supported(DataOps.Keys)}");
                         continue;
                     }
                     CheckMembers(op, allowed, opPath);
@@ -328,7 +337,7 @@ public static class ChangesetValidator
                     CheckMembers(a, ["fingerprint", "approvedBy", "approvedAt", "comment", "attestation"], $"$.approvals[{i}]");
                     if (!TryString(a["fingerprint"], out _)) Err($"$.approvals[{i}].fingerprint", "required string");
                     if (!TryString(a["approvedBy"], out _)) Err($"$.approvals[{i}].approvedBy", "required string");
-                    if (!TryString(a["approvedAt"], out _)) Err($"$.approvals[{i}].approvedAt", "required RFC 3339 string");
+                    CheckTimestamp(a, "approvedAt", $"$.approvals[{i}].approvedAt", "spec §7");
                 }
         }
 

@@ -61,6 +61,11 @@ MUST be rejected by validators (closed model in v0 — forward compatibility is 
 }
 ```
 
+- `createdAt` (REQUIRED): when the document was produced, as an RFC 3339 `date-time`
+  (RFC 3339 §5.6, with the §5.7 restrictions — a real calendar day, hours `00`–`23`).
+  `T` and `Z` are case-insensitive; the offset is REQUIRED (`Z` or `±HH:MM` — a local
+  time without one is not a point in time); a space in place of `T` is not admitted.
+  Validators MUST reject a value outside that grammar.
 - `baseState` (REQUIRED, MAY be empty only for greenfield creation): the world this
   changeset was authored against. A consumer that detects drift from `baseState` MUST
   refuse to apply (drift refuses, never guesses).
@@ -332,7 +337,9 @@ Implementations MUST reject unknown fingerprint prefixes.
 `approvals` is an array of ApprovalRecords (`fingerprint`, `approvedBy`, `approvedAt`,
 `comment?`, `attestation?` — the last a reserved extension slot, absent in v0). Approval
 records live outside the fingerprint envelope so that an approval can reference the
-fingerprint without changing it.
+fingerprint without changing it. `approvedAt` MUST be an RFC 3339 `date-time` under the
+same rule as `createdAt` (§4) — it is the only record of when a review happened, and a
+free-form value cannot be compared across the tools that read it.
 
 **Gate**: a conforming applier MUST recompute the fingerprint (§6), MUST verify it equals
 the `fingerprint` of an approval record it trusts, and MUST refuse otherwise. There is no
@@ -348,7 +355,8 @@ verified on structural checks alone.
 **Layer 1 — structural validity (document alone).** A document is structurally valid
 iff: well-formed I-JSON; no unknown members; `specVersion` supported; `intent` present;
 ≥1 non-empty facet; every patch has `explanation`; `baseState` entries are structurally
-well-formed with known `kind` (§4); schema ops and types are from the v0 vocabulary;
+well-formed with known `kind` (§4); `createdAt` and every `approvedAt` are RFC 3339
+`date-time`s (§4, §7); schema ops and types are from the v0 vocabulary;
 `whole-artifact@0` patches satisfy the self-contained diff-consistency check (§5.2.1);
 `verified-diff@0` patches have a non-null `baseFingerprint`, a `diff` that parses under
 the dialect (§5.2.2) with ≥1 hunk, and `newFingerprint ≠ baseFingerprint`; data patch
@@ -390,6 +398,11 @@ applies at every version a validator supports.
   everywhere" resting on each consumer's private assumption. The clause constrains
   consumers, not documents: nothing about a document's shape or stamping changes, and
   0.3.0-stamped documents are governed by it like any other (§9).
+- **Tightened — timestamps (§4, §7)**: `createdAt` and `approvedAt` were described as
+  RFC 3339 but only required to be strings, so `"last tuesday"` validated. Both are now
+  checked against the RFC 3339 `date-time` grammar at every supported `specVersion` —
+  a tightening, not a feature (§9). Migration: documents carrying any other timestamp
+  form are invalid; `toISOString()` and equivalent RFC 3339 formatters already conform.
 - **Open item O-5** records what §5.4 deliberately does not settle — where a rename or
   retype falls relative to data operations.
 
