@@ -361,7 +361,7 @@
     ]
   },
   {
-    "name": "dialect failure is located inside the diff, not at the patch (BD-01 2 — lifted, not spliced)",
+    "name": "dialect failure is located inside the diff, not at the patch (lifted, not spliced)",
     "document": {
       "specVersion": "0.2.0",
       "intent": "x",
