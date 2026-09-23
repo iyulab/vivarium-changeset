@@ -2,8 +2,33 @@
 
 All notable changes to the changeset spec and its reference SDKs.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) ·
-versioning: the spec and the reference SDKs version together while both
-are pre-1.0.
+versioning: each SDK follows semver for its API, and the spec's version
+moves only when the document format does. Every entry names the spec
+version the SDKs implement. (Through 0.4.0 the spec and the SDKs versioned
+together.)
+
+## [0.5.0] — 2026-09-23
+
+> Published as `@vivariumjs/changeset@0.5.0` (npm) and
+> `Vivarium.Changeset 0.5.0` (NuGet), tags `ts-v0.5.0` / `dotnet-v0.5.0`.
+> The SDKs implement **spec 0.4.0**, which is unchanged: this release adds
+> SDK surface only, so documents and their fingerprints are the same.
+
+### Added
+- **Building an approval record** — `addApproval` (TypeScript) and
+  `ChangesetApproval.Add` (.NET) take a finalized document and return a copy
+  with one approval record appended (spec §7). The record's `fingerprint` is
+  derived from the document, never passed in, so it names exactly what was
+  reviewed. The caller supplies `approvedBy` and `approvedAt`, as it does
+  `createdAt`.
+- Refusals: a document without a fingerprint (never finalized), or whose
+  fingerprint no longer matches its contents (changed after finalizing), is
+  refused under the new subject `cannot approve`. The emitted document is
+  validated, so an `approvedAt` that is not an RFC 3339 `date-time` is refused
+  with the validator's message. `attestation` stays reserved and is not
+  accepted.
+- `spec/fixtures/approval.json` — cross-SDK vectors for the operation and its
+  refusals, maintained by hand.
 
 ## [0.4.0] — 2026-09-23
 
