@@ -47,7 +47,7 @@ jobs:
       - name: Unit + conformance tests
         run: dotnet test
 
-  # Consumer-contact smoke (Phase 5.a): the README examples are extracted and
+  # Consumer-contact smoke: the README examples are extracted and
   # executed as a fresh consumer — a throwaway package that npm-installs the
   # TS SDK, and a throwaway console project referencing the .NET SDK. Catches
   # examples that drift from the API or silently do nothing.
