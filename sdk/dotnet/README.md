@@ -48,6 +48,22 @@ if (!ChangesetFingerprint.Verify(doc))          // spec §6 — content-addresse
     throw new InvalidOperationException("refusing changeset: fingerprint mismatch");
 ```
 
+Recording a review. The approval record's fingerprint is taken from the document, never
+passed in, so it names exactly what was reviewed; a document that was never finalized, or
+changed after it was, is refused. The caller supplies the clock, as for `createdAt`:
+
+```csharp
+var approved = ChangesetApproval.Add(
+    doc,
+    approvedBy: "reviewer@example.com",               // opaque to the SDK
+    approvedAt: DateTimeOffset.UtcNow.ToString("o"),  // RFC 3339 date-time (spec §7)
+    comment: "Checked the due-date rendering");       // optional
+// approved["approvals"][0]["fingerprint"] equals doc["fingerprint"] — approvals sit outside the hash
+```
+
+Which approvals an applier trusts, and where records are kept, are the applier's decision
+(spec §7) — this only builds a record the gate can check.
+
 ### `verified-diff@0` UI patches (spec 0.2)
 
 Surgical edits ride as a strict-dialect unified diff instead of a full artifact
@@ -86,6 +102,7 @@ _ = verdict.NewContent; // exactly what the reviewer's diff described
 | `VerifiedDiff` | `Create`, `Apply`, `ParseStrict`, `VerifyAgainstBase` — spec §5.2.2 dialect |
 | `ChangesetValidator` | `Validate`, `SupportedSpecVersions`, `BaseStateKinds` |
 | `ChangesetBuilder` | `AddSchemaOp`, `AddUiPatch`, `AddVerifiedDiffPatch`, `AddDataPatch`, `ToDraft`, `Finalize` |
+| `ChangesetApproval` | `Add` — spec §7 |
 
 ## Conformance
 

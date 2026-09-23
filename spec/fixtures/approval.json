@@ -1,0 +1,163 @@
+{
+  "about": "addApproval / ChangesetApproval.Add (spec §7). Each vector edits the shared finalized `document` (`remove` members, then `set` members), approves it with `approval`, and expects either the resulting `approvals` array or a refusal (`subject` + `errors`). The first vector's expected record is the one in gate-approved-valid.json, which was written independently of either builder.",
+  "document": {
+    "specVersion": "0.1.0",
+    "intent": "Add a due-date to the loan screen",
+    "provenance": {
+      "producedBy": "fixture-generator",
+      "createdAt": "2026-07-16T00:00:00Z",
+      "baseState": [
+        {
+          "kind": "schema",
+          "ref": "default",
+          "fingerprint": "sha256:abababababababababababababababababababababababababababababababab"
+        }
+      ]
+    },
+    "patches": {
+      "schema": [
+        {
+          "op": "field.add",
+          "entity": "loan",
+          "field": {
+            "name": "dueDate",
+            "type": "date",
+            "required": false
+          },
+          "explanation": "Stores the loan's due date"
+        }
+      ],
+      "ui": [],
+      "data": []
+    },
+    "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312"
+  },
+  "vectors": [
+    {
+      "name": "a first approval: the record's fingerprint is the document's own",
+      "approval": {
+        "approvedBy": "reviewer-1",
+        "approvedAt": "2026-07-16T01:00:00Z"
+      },
+      "approvals": [
+        {
+          "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312",
+          "approvedBy": "reviewer-1",
+          "approvedAt": "2026-07-16T01:00:00Z"
+        }
+      ]
+    },
+    {
+      "name": "a later approval is appended after the existing ones, comment kept",
+      "set": {
+        "approvals": [
+          {
+            "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312",
+            "approvedBy": "reviewer-1",
+            "approvedAt": "2026-07-16T01:00:00Z"
+          }
+        ]
+      },
+      "approval": {
+        "approvedBy": "reviewer-2",
+        "approvedAt": "2026-07-16T02:30:00.250+09:00",
+        "comment": "Checked against the staging copy."
+      },
+      "approvals": [
+        {
+          "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312",
+          "approvedBy": "reviewer-1",
+          "approvedAt": "2026-07-16T01:00:00Z"
+        },
+        {
+          "fingerprint": "sha256:1aae65b47bee4e9bdb066b4cf6dcd0b5ca1a265bedd6094aeee3a08fd919c312",
+          "approvedBy": "reviewer-2",
+          "approvedAt": "2026-07-16T02:30:00.250+09:00",
+          "comment": "Checked against the staging copy."
+        }
+      ]
+    },
+    {
+      "name": "refused: the document was never finalized",
+      "remove": [
+        "fingerprint"
+      ],
+      "approval": {
+        "approvedBy": "reviewer-1",
+        "approvedAt": "2026-07-16T01:00:00Z"
+      },
+      "subject": "cannot approve",
+      "errors": [
+        {
+          "path": "$.fingerprint",
+          "message": "absent — only a finalized document can be approved (spec §7)"
+        }
+      ]
+    },
+    {
+      "name": "refused: the document changed after it was finalized",
+      "set": {
+        "intent": "Add a due-date and a fine to the loan screen"
+      },
+      "approval": {
+        "approvedBy": "reviewer-1",
+        "approvedAt": "2026-07-16T01:00:00Z"
+      },
+      "subject": "cannot approve",
+      "errors": [
+        {
+          "path": "$.fingerprint",
+          "message": "does not match the document's contents — it changed after it was finalized (spec §7)"
+        }
+      ]
+    },
+    {
+      "name": "refused: a fingerprint prefix this spec does not define",
+      "set": {
+        "fingerprint": "md5:abc"
+      },
+      "approval": {
+        "approvedBy": "reviewer-1",
+        "approvedAt": "2026-07-16T01:00:00Z"
+      },
+      "subject": "cannot read fingerprint",
+      "errors": [
+        {
+          "path": "$.fingerprint",
+          "message": "unsupported fingerprint prefix: md5:"
+        }
+      ]
+    },
+    {
+      "name": "refused: approvedAt is not an RFC 3339 date-time",
+      "approval": {
+        "approvedBy": "reviewer-1",
+        "approvedAt": "2026-07-16 01:00:00Z"
+      },
+      "subject": "changeset failed validation",
+      "errors": [
+        {
+          "path": "$.approvals[0].approvedAt",
+          "message": "not an RFC 3339 date-time: \"2026-07-16 01:00:00Z\" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §7)"
+        }
+      ]
+    },
+    {
+      "name": "refused: the existing approvals member is not an array",
+      "set": {
+        "approvals": {}
+      },
+      "approval": {
+        "approvedBy": "reviewer-1",
+        "approvedAt": "2026-07-16T01:00:00Z"
+      },
+      "subject": "changeset failed validation",
+      "errors": [
+        {
+          "path": "$.approvals",
+          "message": "must be an array"
+        }
+      ]
+    }
+  ]
+}

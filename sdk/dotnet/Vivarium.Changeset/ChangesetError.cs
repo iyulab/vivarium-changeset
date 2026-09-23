@@ -55,4 +55,5 @@ public static class ChangesetErrorSubject
     public const string UnifiedDiff = "outside the unified-diff dialect";
     public const string Canonicalization = "cannot canonicalize";
     public const string Fingerprint = "cannot read fingerprint";
+    public const string Approval = "cannot approve";
 }

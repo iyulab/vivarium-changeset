@@ -63,4 +63,5 @@ export const SUBJECT = {
   unifiedDiff: "outside the unified-diff dialect",
   canonicalization: "cannot canonicalize",
   fingerprint: "cannot read fingerprint",
+  approval: "cannot approve",
 } as const;

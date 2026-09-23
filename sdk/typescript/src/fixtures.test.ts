@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { canonicalize } from "./canonicalize.ts";
+import { addApproval } from "./approval.ts";
 import { applyUnifiedDiff } from "./diff.ts";
 import { ChangesetError } from "./errors.ts";
 import { fingerprintOf, verifyFingerprint } from "./fingerprint.ts";
@@ -142,6 +143,34 @@ test("refusal subjects and messages reproduce across the SDKs", () => {
     assert.deepEqual(e.errors, vector.errors, `vector: ${vector.name}`);
     // The subject heads the rendered message; comparing the whole line keeps both
     // the subject and the rendering locked, not just one of them.
+    const rendered = vector.errors
+      .map((x: { path: string; message: string }) => (x.path === "" ? `  ${x.message}` : `  ${x.path}: ${x.message}`))
+      .join("\n");
+    assert.equal(e.message, `${vector.subject}:\n${rendered}`, `vector: ${vector.name}`);
+  }
+});
+
+test("approval fixtures reproduce across the SDKs", () => {
+  const { document, vectors } = load("approval.json");
+  for (const vector of vectors) {
+    const input = structuredClone(document);
+    for (const member of vector.remove ?? []) delete input[member];
+    Object.assign(input, structuredClone(vector.set ?? {}));
+    let result: Record<string, unknown> | undefined;
+    let thrown: unknown;
+    try {
+      result = addApproval(input, vector.approval);
+    } catch (e) {
+      thrown = e;
+    }
+    if (vector.approvals !== undefined) {
+      assert.equal(thrown, undefined, `vector ${vector.name}: unexpected ${thrown}`);
+      assert.deepEqual(result!.approvals, vector.approvals, `vector: ${vector.name}`);
+      continue;
+    }
+    assert.ok(thrown instanceof ChangesetError, `vector ${vector.name}: expected a ChangesetError, got ${thrown}`);
+    const e = thrown as ChangesetError;
+    assert.deepEqual(e.errors, vector.errors, `vector: ${vector.name}`);
     const rendered = vector.errors
       .map((x: { path: string; message: string }) => (x.path === "" ? `  ${x.message}` : `  ${x.path}: ${x.message}`))
       .join("\n");

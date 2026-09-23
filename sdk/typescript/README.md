@@ -56,6 +56,24 @@ if (!verifyFingerprint(doc)) {  // spec §6 — content-addressed integrity
 }
 ```
 
+Recording a review. The approval record's fingerprint is taken from the document, never
+passed in, so it names exactly what was reviewed; a document that was never finalized, or
+changed after it was, is refused. The caller supplies the clock, as for `createdAt`:
+
+```ts
+import { addApproval } from "@vivariumjs/changeset";
+
+const approved = addApproval(doc, {
+  approvedBy: "reviewer@example.com",        // opaque to the SDK
+  approvedAt: new Date().toISOString(),      // RFC 3339 date-time (spec §7)
+  comment: "Checked the due-date rendering", // optional
+});
+// approved.approvals[0].fingerprint === doc.fingerprint — approvals sit outside the hash
+```
+
+Which approvals an applier trusts, and where records are kept, are the applier's decision
+(spec §7) — this only builds a record the gate can check.
+
 ### `verified-diff@0` UI patches (spec 0.2)
 
 Surgical edits ride as a strict-dialect unified diff instead of a full artifact
@@ -91,6 +109,7 @@ verdict.newContent; // exactly what the reviewer's diff described
 | verified-diff | `createVerifiedDiff`, `applyVerifiedDiff`, `parseVerifiedDiff`, `verifyAgainstBase` — spec §5.2.2 dialect |
 | validate | `validate`, `SUPPORTED_SPEC_VERSIONS`, `BASE_STATE_KINDS` |
 | builder | `createChangeset`, `addSchemaOp`, `addUiPatch`, `addDataPatch`, `finalize`, `artifactFingerprint` |
+| approval | `addApproval`, `ApprovalRecord` — spec §7 |
 
 ## Conformance
 

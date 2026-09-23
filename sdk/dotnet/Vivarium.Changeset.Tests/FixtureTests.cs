@@ -237,6 +237,50 @@ public class FixtureTests
         }
     }
 
+    /// <summary>
+    /// The same vectors the TypeScript SDK runs against <c>addApproval</c>: each edits the
+    /// shared finalized document, approves it, and expects the resulting approvals or the
+    /// refusal, message for message.
+    /// </summary>
+    [Fact]
+    public void ApprovalFixturesReproduceAcrossTheSdks()
+    {
+        var fixture = Load("approval.json");
+        foreach (var vector in fixture.GetProperty("vectors").EnumerateArray())
+        {
+            var name = vector.GetProperty("name").GetString()!;
+            var input = JsonNode.Parse(fixture.GetProperty("document").GetRawText())!.AsObject();
+            if (vector.TryGetProperty("remove", out var remove))
+                foreach (var member in remove.EnumerateArray()) input.Remove(member.GetString()!);
+            if (vector.TryGetProperty("set", out var set))
+                foreach (var member in set.EnumerateObject()) input[member.Name] = JsonNode.Parse(member.Value.GetRawText());
+
+            var approval = vector.GetProperty("approval");
+            JsonObject? result = null;
+            var thrown = Record.Exception(() => result = ChangesetApproval.Add(
+                input,
+                approval.GetProperty("approvedBy").GetString()!,
+                approval.GetProperty("approvedAt").GetString()!,
+                approval.TryGetProperty("comment", out var c) ? c.GetString() : null));
+
+            if (vector.TryGetProperty("approvals", out var expectedApprovals))
+            {
+                Assert.True(thrown is null, $"vector {name}: unexpected {thrown}");
+                Assert.True(JsonNode.DeepEquals(JsonNode.Parse(expectedApprovals.GetRawText()), result!["approvals"]), $"vector: {name}");
+                continue;
+            }
+
+            var error = Assert.IsAssignableFrom<ChangesetError>(thrown);
+            var expected = vector.GetProperty("errors").EnumerateArray()
+                .Select(e => (Path: e.GetProperty("path").GetString()!, Message: e.GetProperty("message").GetString()!))
+                .ToArray();
+            Assert.Equal(expected, error.Errors.Select(e => (e.Path, e.Message)).ToArray());
+            var rendered = string.Join("\n", expected.Select(e =>
+                e.Path.Length == 0 ? $"  {e.Message}" : $"  {e.Path}: {e.Message}"));
+            Assert.Equal($"{vector.GetProperty("subject").GetString()}:\n{rendered}", error.Message);
+        }
+    }
+
     private static void Probe(string op, string input, JsonElement vector)
     {
         switch (op)
