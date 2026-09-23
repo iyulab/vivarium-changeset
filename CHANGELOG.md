@@ -7,6 +7,21 @@ moves only when the document format does. Every entry names the spec
 version the SDKs implement. (Through 0.4.0 the spec and the SDKs versioned
 together.)
 
+## [TS 0.5.1] — 2026-09-23
+
+> Published as `@vivariumjs/changeset@0.5.1` (npm), tag `ts-v0.5.1`.
+> TypeScript SDK only — `Vivarium.Changeset` stays at 0.5.0, unchanged.
+> Implements **spec 0.4.0**, unchanged.
+
+### Fixed
+- The TypeScript SDK now loads in browsers and any other ES module runtime. It
+  imported `node:crypto` for SHA-256, so bundlers and browsers could not load
+  any part of it — including `addApproval`, whose natural caller is a review
+  UI. SHA-256 is now implemented in the package: the API stays synchronous,
+  there are still no runtime dependencies, and every fingerprint is unchanged
+  (the cross-SDK fixtures are byte-identical). The README now states the
+  supported runtimes.
+
 ## [0.5.0] — 2026-09-23
 
 > Published as `@vivariumjs/changeset@0.5.0` (npm) and
