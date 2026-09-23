@@ -1,0 +1,187 @@
+[
+  {
+    "value": "2026-01-01T00:00:00Z",
+    "valid": true,
+    "why": "basic Z"
+  },
+  {
+    "value": "2026-01-01t00:00:00z",
+    "valid": true,
+    "why": "lowercase t/z (RFC 5234 case-insensitive literals)"
+  },
+  {
+    "value": "2026-01-01T00:00:00.123456789Z",
+    "valid": true,
+    "why": "fraction"
+  },
+  {
+    "value": "2026-01-01T00:00:00+09:00",
+    "valid": true,
+    "why": "positive offset"
+  },
+  {
+    "value": "2026-01-01T00:00:00-00:00",
+    "valid": true,
+    "why": "unknown-local-offset convention (RFC 3339 §4.3)"
+  },
+  {
+    "value": "2024-02-29T00:00:00Z",
+    "valid": true,
+    "why": "leap day, div by 4"
+  },
+  {
+    "value": "2000-02-29T00:00:00Z",
+    "valid": true,
+    "why": "leap day, div by 400"
+  },
+  {
+    "value": "1900-02-29T00:00:00Z",
+    "valid": false,
+    "why": "not leap, div by 100"
+  },
+  {
+    "value": "2026-02-29T00:00:00Z",
+    "valid": false,
+    "why": "not leap"
+  },
+  {
+    "value": "2026-04-31T00:00:00Z",
+    "valid": false,
+    "why": "30-day month"
+  },
+  {
+    "value": "2026-12-31T23:59:60Z",
+    "valid": true,
+    "why": "leap second grammatical"
+  },
+  {
+    "value": "2026-12-31T23:59:61Z",
+    "valid": false,
+    "why": "second 61"
+  },
+  {
+    "value": "2026-12-31T24:00:00Z",
+    "valid": false,
+    "why": "hour 24"
+  },
+  {
+    "value": "2026-12-31T23:60:00Z",
+    "valid": false,
+    "why": "minute 60"
+  },
+  {
+    "value": "2026-00-10T00:00:00Z",
+    "valid": false,
+    "why": "month 00"
+  },
+  {
+    "value": "2026-13-10T00:00:00Z",
+    "valid": false,
+    "why": "month 13"
+  },
+  {
+    "value": "2026-01-00T00:00:00Z",
+    "valid": false,
+    "why": "day 00"
+  },
+  {
+    "value": "2026-01-01T00:00:00+24:00",
+    "valid": false,
+    "why": "offset hour 24"
+  },
+  {
+    "value": "2026-01-01T00:00:00+09:60",
+    "valid": false,
+    "why": "offset minute 60"
+  },
+  {
+    "value": "2026-01-01T00:00:00+0900",
+    "valid": false,
+    "why": "offset without colon"
+  },
+  {
+    "value": "2026-01-01T00:00:00",
+    "valid": false,
+    "why": "no offset"
+  },
+  {
+    "value": "2026-01-01 00:00:00Z",
+    "valid": false,
+    "why": "space separator"
+  },
+  {
+    "value": "2026-01-01T00:00Z",
+    "valid": false,
+    "why": "no seconds"
+  },
+  {
+    "value": "2026-01-01T00:00:00.Z",
+    "valid": false,
+    "why": "empty fraction"
+  },
+  {
+    "value": "2026-01-01T00:00:00,5Z",
+    "valid": false,
+    "why": "comma fraction"
+  },
+  {
+    "value": "26-01-01T00:00:00Z",
+    "valid": false,
+    "why": "2-digit year"
+  },
+  {
+    "value": "+2026-01-01T00:00:00Z",
+    "valid": false,
+    "why": "signed year"
+  },
+  {
+    "value": "2026-1-01T00:00:00Z",
+    "valid": false,
+    "why": "1-digit month"
+  },
+  {
+    "value": "2026-01-01T00:00:00Z\n",
+    "valid": false,
+    "why": "trailing newline"
+  },
+  {
+    "value": " 2026-01-01T00:00:00Z",
+    "valid": false,
+    "why": "leading space"
+  },
+  {
+    "value": "2026-01-01T00:00:00ZZ",
+    "valid": false,
+    "why": "double Z"
+  },
+  {
+    "value": "２０２６-01-01T00:00:00Z",
+    "valid": false,
+    "why": "fullwidth digits"
+  },
+  {
+    "value": "٢٠٢٦-01-01T00:00:00Z",
+    "valid": false,
+    "why": "arabic-indic digits"
+  },
+  {
+    "value": "0000-01-01T00:00:00Z",
+    "valid": true,
+    "why": "year 0000 grammatical"
+  },
+  {
+    "value": "0000-02-29T00:00:00Z",
+    "valid": true,
+    "why": "year 0000 is leap (div by 400)"
+  },
+  {
+    "value": "9999-12-31T23:59:59Z",
+    "valid": true,
+    "why": "max year"
+  },
+  {
+    "value": "",
+    "valid": false,
+    "why": "empty"
+  }
+]
