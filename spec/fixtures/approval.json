@@ -1,5 +1,5 @@
 {
-  "about": "addApproval / ChangesetApproval.Add (spec §7). Each vector edits the shared finalized `document` (`remove` members, then `set` members), approves it with `approval`, and expects either the resulting `approvals` array or a refusal (`subject` + `errors`). The first vector's expected record is the one in gate-approved-valid.json, which was written independently of either builder.",
+  "about": "addApproval / ChangesetApproval.Add (spec §7). Each vector edits the shared finalized `document` (`remove` members, then `set` members), approves it with `approval`, and expects either the resulting `approvals` array or a refusal (`subject` + `errors`). The first vector's expected record is the one in gate-approved-valid.json, which was written independently of either builder. Maintained by hand, not by tools/generate-fixtures.ts: the expectations must not come from either SDK.",
   "document": {
     "specVersion": "0.1.0",
     "intent": "Add a due-date to the loan screen",
