@@ -8,6 +8,12 @@ Zero runtime dependencies. The package ships built ES modules (`dist/`, emitted 
 `npm run build` / `prepack`); working in this repo runs the TypeScript source
 directly and requires Node ≥ 23.6.
 
+Runs in Node ≥ 20 and in browsers or any other ES module runtime that provides
+`TextEncoder`. It imports no platform module, so a review UI can build an approval
+record with `addApproval` in the page where the reviewer approves. Every function
+is synchronous, including fingerprinting: the SHA-256 is implemented in the package,
+because WebCrypto's digest is asynchronous only.
+
 ## Usage
 
 ```ts

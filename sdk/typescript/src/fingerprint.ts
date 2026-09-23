@@ -1,7 +1,6 @@
 import { ChangesetError, SUBJECT } from "./errors.ts";
-
-import { createHash } from "node:crypto";
 import { canonicalBytes } from "./canonicalize.ts";
+import { sha256Hex } from "./sha256.ts";
 
 export const FINGERPRINT_PREFIX = "sha256:";
 
@@ -12,8 +11,7 @@ export const FINGERPRINT_PREFIX = "sha256:";
  */
 export function fingerprintOf(document: Record<string, unknown>): string {
   const { fingerprint: _f, approvals: _a, ...content } = document;
-  const digest = createHash("sha256").update(canonicalBytes(content)).digest("hex");
-  return FINGERPRINT_PREFIX + digest;
+  return FINGERPRINT_PREFIX + sha256Hex(canonicalBytes(content));
 }
 
 /**
@@ -21,7 +19,7 @@ export function fingerprintOf(document: Record<string, unknown>): string {
  * content bytes — artifact content is not JSON, so no JCS.
  */
 export const artifactFingerprint = (content: string): string =>
-  FINGERPRINT_PREFIX + createHash("sha256").update(content, "utf8").digest("hex");
+  FINGERPRINT_PREFIX + sha256Hex(new TextEncoder().encode(content));
 
 /** Return a copy of the document with its computed fingerprint stamped in. */
 export function stampFingerprint<T extends Record<string, unknown>>(document: T): T & { fingerprint: string } {
