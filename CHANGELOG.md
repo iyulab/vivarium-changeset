@@ -5,6 +5,73 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) ·
 versioning: the spec and the reference SDKs version together while both
 are pre-1.0.
 
+## [0.4.0] — 2026-09-23
+
+> Published as `@vivariumjs/changeset@0.4.0` (npm) and
+> `Vivarium.Changeset 0.4.0` (NuGet), tags `ts-v0.4.0` / `dotnet-v0.4.0`.
+> Spec 0.4.0 is normative; both SDKs conform to it with byte-identical
+> fingerprints and byte-identical validation messages.
+
+### Added
+- **Spec §5.4 — how one document's facets are applied, and what a removal takes with it.**
+  A consumer applies additive schema operations before the document's data operations and
+  removing ones after them, and a removal carries away the values stored under what it
+  removes. Both were previously unstated, which left "retire this field and clear it
+  everywhere" resting on each consumer's private assumption and could leave rows holding a
+  member no schema declares. The clause constrains consumers, not documents: no member and
+  no feature is added, document shape and stamping are unchanged, and documents of every
+  `specVersion` are governed by it.
+- **Open item O-5** — where `field.rename` / `field.retype` / `entity.rename` fall relative
+  to data operations is deliberately left open; a rename adds and removes at once, so
+  neither phase claims it, and no document combining the two has appeared yet.
+- **Four cross-SDK vectors pin the refusal subjects** (`refusal-subjects.json`). Three of the
+  five subject literals are raised by paths the validator never reaches, so nothing compared
+  them and the two SDKs could have drifted into saying different things to the same consumer.
+- Both SDKs accept `specVersion` `0.4.0`. Nothing stamps it — §9 has producers stamp the
+  lowest version whose features they use, and 0.4.0 adds no document feature — but a
+  validator that refused the current spec's own version would be its own contradiction.
+- **`ChangesetError` — one located-failure shape for the whole SDK.** Parsing, canonicalization
+  and fingerprint reading now raise it with the same `{ path, message }` list validation has
+  always reported, so a caller reads "what went wrong and where" the same way whichever raised
+  it. `ChangesetValidationError` / `ChangesetValidationException` extend it and are unchanged
+  in what they carry.
+
+### Changed
+- **A dialect failure inside a UI patch is located inside the diff.** The validator used to
+  splice the parser's sentence into one of its own, which reported every diff failure at
+  `$.patches.ui[N].diff` however deep inside the diff it happened. Failures are now lifted with
+  their own location — `$.patches.ui[0].diff.hunk[1]` — into the same flat error list. The same
+  lift applies in `verifyAgainstBase`, which keeps its layer-2 framing on the message.
+- **Timestamps are checked, not just typed (spec §4, §7 — tightened).** `provenance.createdAt`
+  and `approvals[].approvedAt` were refused with "required RFC 3339 string" but only checked to
+  be strings, so `"last tuesday"` validated. Both SDKs now check the RFC 3339 `date-time`
+  grammar — the same rule in each, not a platform date parser, since the two platforms' parsers
+  accept different non-RFC inputs — and refuse with
+  `not an RFC 3339 date-time: "…" (expected YYYY-MM-DDTHH:MM:SS[.frac](Z|+HH:MM|-HH:MM), spec §4)`.
+  Applies at every supported `specVersion`. `toISOString()`, `DateTimeOffset.ToString("o")` and a
+  UTC `DateTime`'s `ToString("o")` conform; a `DateTime` of unspecified kind formats without an
+  offset and is now refused.
+- **.NET validation messages quote offending values exactly as the TypeScript SDK does.**
+  The .NET SDK rendered them with the default JSON encoder, which escapes `+ < > & '` and every
+  non-ASCII character, keeps a number's source spelling (`1.0`), and printed an explicit `null`
+  as `undefined`. Messages for such values differed between the SDKs despite the parity vectors,
+  which had never exercised them. Now pinned by six new vectors.
+- **TypeScript: `field.add` with a falsy non-null `field` (`0`, `""`, `false`) is refused.** It was
+  skipped by a truthiness test and validated; the .NET SDK already refused it.
+
+### Removed
+- **Parsing and verification no longer raise the built-in types.** `SyntaxError`, `RangeError`,
+  `TypeError` (TypeScript) and `FormatException`, `InvalidOperationException`,
+  `ArgumentException`, `ArgumentOutOfRangeException` (.NET) are replaced by `ChangesetError` at
+  every consumer-facing throw site. Code that caught the built-in types will not catch these.
+
+> **Upgrade note**: catch `ChangesetError` and read `.errors` / `.Errors`. The message text of
+> each individual failure is unchanged — only its carrier, and the fact that it now has a path.
+> Two exceptions, both listed under Changed: timestamps that are not RFC 3339 `date-time`s are
+> now refused (a document that validated may not), and .NET messages quoting a value with
+> non-ASCII or HTML-sensitive characters, a non-canonical number, or `null` now render it as
+> the TypeScript SDK does.
+
 ## [0.3.0] — 2026-08-06
 
 > Published as `@vivariumjs/changeset@0.3.0` (npm) and
