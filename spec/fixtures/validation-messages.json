@@ -56,7 +56,7 @@
     "errors": [
       {
         "path": "$.specVersion",
-        "message": "unsupported specVersion: \"0.1\" (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+        "message": "unsupported specVersion: \"0.1\" (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0, 0.5.0)"
       }
     ]
   },
@@ -823,6 +823,63 @@
     ]
   },
   {
+    "name": "attestation present — reserved and refused whatever its value, comment is the note's place (spec §7)",
+    "document": {
+      "specVersion": "0.2.0",
+      "intent": "x",
+      "provenance": {
+        "producedBy": "a",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "baseState": [
+          {
+            "kind": "schema",
+            "ref": "r",
+            "fingerprint": "sha256:aaaa"
+          }
+        ]
+      },
+      "patches": {
+        "schema": [
+          {
+            "op": "entity.remove",
+            "entity": "loan",
+            "explanation": "e"
+          }
+        ]
+      },
+      "approvals": [
+        {
+          "fingerprint": "sha256:aaaa",
+          "approvedBy": "r",
+          "approvedAt": "2026-07-16T01:00:00Z",
+          "attestation": "reviewed on the call"
+        },
+        {
+          "fingerprint": "sha256:aaaa",
+          "approvedBy": "r",
+          "approvedAt": "2026-07-16T01:00:00Z",
+          "attestation": null
+        },
+        {
+          "fingerprint": "sha256:aaaa",
+          "approvedBy": "r",
+          "approvedAt": "2026-07-16T01:00:00Z",
+          "comment": "reviewed on the call"
+        }
+      ]
+    },
+    "errors": [
+      {
+        "path": "$.approvals[0].attestation",
+        "message": "reserved member, absent in v0 (spec §7)"
+      },
+      {
+        "path": "$.approvals[1].attestation",
+        "message": "reserved member, absent in v0 (spec §7)"
+      }
+    ]
+  },
+  {
     "name": "quoting parity — characters one platform encoder escapes and the other does not",
     "document": {
       "specVersion": "0.1+rc<1>&'é😀 ",
@@ -851,7 +908,7 @@
     "errors": [
       {
         "path": "$.specVersion",
-        "message": "unsupported specVersion: \"0.1+rc<1>&'é😀 \" (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+        "message": "unsupported specVersion: \"0.1+rc<1>&'é😀 \" (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0, 0.5.0)"
       }
     ]
   },
@@ -884,7 +941,7 @@
     "errors": [
       {
         "path": "$.specVersion",
-        "message": "unsupported specVersion: 1 (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+        "message": "unsupported specVersion: 1 (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0, 0.5.0)"
       }
     ]
   },
@@ -917,7 +974,7 @@
     "errors": [
       {
         "path": "$.specVersion",
-        "message": "unsupported specVersion: null (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0)"
+        "message": "unsupported specVersion: null (supported: 0.1.0, 0.2.0, 0.3.0, 0.4.0, 0.5.0)"
       }
     ]
   },
@@ -935,10 +992,10 @@
               "1": 2,
               "b": 1,
               "a": [
-                1E21,
+                1e+21,
                 -0.0,
-                1.0e-6,
-                10e-8
+                1e-06,
+                1e-07
               ]
             },
             "ref": "r",

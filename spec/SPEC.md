@@ -1,9 +1,10 @@
 # Vivarium Changeset Specification
 
-**Version: 0.4.0** · Status: normative. The spec carries no separate version
+**Version: 0.5.0** · Status: normative. The spec carries no separate version
 tag: release tags name their artifact (`ts-v*` / `dotnet-v*`), because one
 shared tag coupled the two registries. Differences from the preceding minors
-are listed in [Changes from 0.3.0](#changes-from-030),
+are listed in [Changes from 0.4.0](#changes-from-040),
+[Changes from 0.3.0](#changes-from-030),
 [Changes from 0.2.0](#changes-from-020) and [Changes from 0.1.0](#changes-from-010).
 
 The key words MUST, MUST NOT, SHOULD, MAY are to be interpreted as in RFC 2119.
@@ -335,8 +336,10 @@ Implementations MUST reject unknown fingerprint prefixes.
 ## 7. Approvals and the gate
 
 `approvals` is an array of ApprovalRecords (`fingerprint`, `approvedBy`, `approvedAt`,
-`comment?`, `attestation?` — the last a reserved extension slot, absent in v0). Approval
-records live outside the fingerprint envelope so that an approval can reference the
+`comment?`, `attestation?`). `attestation` is a reserved extension slot for a future
+signing profile: a v0 producer MUST NOT emit it, and a validator MUST refuse a record that
+carries it, whatever its value — a slot that accepts anything now could only be given a
+meaning later by refusing what it already holds. Approval records live outside the fingerprint envelope so that an approval can reference the
 fingerprint without changing it. `approvedAt` MUST be an RFC 3339 `date-time` under the
 same rule as `createdAt` (§4) — it is the only record of when a review happened, and a
 free-form value cannot be compared across the tools that read it.
@@ -356,7 +359,7 @@ verified on structural checks alone.
 iff: well-formed I-JSON; no unknown members; `specVersion` supported; `intent` present;
 ≥1 non-empty facet; every patch has `explanation`; `baseState` entries are structurally
 well-formed with known `kind` (§4); `createdAt` and every `approvedAt` are RFC 3339
-`date-time`s (§4, §7); schema ops and types are from the v0 vocabulary;
+`date-time`s (§4, §7); no approval record carries `attestation` (§7); schema ops and types are from the v0 vocabulary;
 `whole-artifact@0` patches satisfy the self-contained diff-consistency check (§5.2.1);
 `verified-diff@0` patches have a non-null `baseFingerprint`, a `diff` that parses under
 the dialect (§5.2.2) with ≥1 hunk, and `newFingerprint ≠ baseFingerprint`; data patch
@@ -388,6 +391,16 @@ misread by an older consumer, the spec makes that SHOULD checkable by gating the
 feature on its version — `verified-diff@0` on 0.2 (§5.2.2), `baseState.kind: "data"`
 on 0.3 (§4). Tightenings are never gated: a rule about what was always malformed
 applies at every version a validator supports.
+
+## Changes from 0.4.0
+
+- **Tightened — `attestation` is refused (§7, §8)**: the member was described as a
+  reserved slot "absent in v0", but validators accepted it with any value, so a
+  free-text note placed there validated while the approval builders — which follow §7 —
+  never emit it. v0 producers MUST NOT emit it and validators MUST refuse it, at every
+  supported `specVersion` — a tightening, not a feature (§9). Migration: move whatever an
+  approval record carries in `attestation` to `comment` if it is a human-readable note;
+  anything else has no v0 home. The slot stays reserved for a signing profile.
 
 ## Changes from 0.3.0
 

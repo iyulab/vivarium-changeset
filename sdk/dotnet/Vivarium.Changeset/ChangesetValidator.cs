@@ -15,7 +15,7 @@ public sealed record ValidationResult(bool Valid, IReadOnlyList<ValidationError>
 public static class ChangesetValidator
 {
     /// <summary>Supported spec versions, ordered ascending — position is precedence.</summary>
-    public static readonly string[] SupportedSpecVersions = ["0.1.0", "0.2.0", "0.3.0", "0.4.0"];
+    public static readonly string[] SupportedSpecVersions = ["0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0"];
 
     /// <summary>Closed <c>baseState.kind</c> vocabulary (spec §4). <c>data</c> is gated on 0.3.0.</summary>
     public static readonly string[] BaseStateKinds = ["schema", "ui-artifact", "changeset", "data"];
@@ -335,6 +335,7 @@ public static class ChangesetValidator
                 {
                     if (approvals[i] is not JsonObject a) { Err($"$.approvals[{i}]", "must be an object"); continue; }
                     CheckMembers(a, ["fingerprint", "approvedBy", "approvedAt", "comment", "attestation"], $"$.approvals[{i}]");
+                    if (a.ContainsKey("attestation")) Err($"$.approvals[{i}].attestation", "reserved member, absent in v0 (spec §7)");
                     if (!TryString(a["fingerprint"], out _)) Err($"$.approvals[{i}].fingerprint", "required string");
                     if (!TryString(a["approvedBy"], out _)) Err($"$.approvals[{i}].approvedBy", "required string");
                     CheckTimestamp(a, "approvedAt", $"$.approvals[{i}].approvedAt", "spec §7");

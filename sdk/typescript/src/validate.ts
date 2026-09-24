@@ -8,7 +8,7 @@ export type { ValidationError } from "./errors.ts";
 import type { ValidationError } from "./errors.ts";
 export interface ValidationResult { valid: boolean; errors: ValidationError[] }
 
-export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0", "0.3.0", "0.4.0"];
+export const SUPPORTED_SPEC_VERSIONS = ["0.1.0", "0.2.0", "0.3.0", "0.4.0", "0.5.0"];
 
 /** Closed `baseState.kind` vocabulary (spec §4). `data` is gated on 0.3.0. */
 export const BASE_STATE_KINDS = ["schema", "ui-artifact", "changeset", "data"];
@@ -282,6 +282,7 @@ export function validate(document: unknown): ValidationResult {
     else (doc.approvals as unknown[]).forEach((a, i) => {
       if (!isRecord(a)) { err(`$.approvals[${i}]`, "must be an object"); return; }
       checkMembers(a, ["fingerprint", "approvedBy", "approvedAt", "comment", "attestation"], `$.approvals[${i}]`);
+      if ("attestation" in a) err(`$.approvals[${i}].attestation`, "reserved member, absent in v0 (spec §7)");
       if (typeof a.fingerprint !== "string") err(`$.approvals[${i}].fingerprint`, "required string");
       if (typeof a.approvedBy !== "string") err(`$.approvals[${i}].approvedBy`, "required string");
       checkTimestamp(a.approvedAt, `$.approvals[${i}].approvedAt`, "spec §7");
