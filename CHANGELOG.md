@@ -7,6 +7,25 @@ moves only when the document format does. Every entry names the spec
 version the SDKs implement. (Through 0.4.0 the spec and the SDKs versioned
 together.)
 
+## [0.6.0] — 2026-09-24
+
+> Published as `@vivariumjs/changeset@0.6.0` (npm) and
+> `Vivarium.Changeset 0.6.0` (NuGet), tags `ts-v0.6.0` / `dotnet-v0.6.0`.
+> The SDKs implement **spec 0.5.0**.
+
+### Changed
+- **Breaking — `attestation` in an approval record is refused (spec 0.5.0, §7).** The
+  member is a reserved slot for a future signing profile. It was described as absent
+  in v0, but both validators accepted it with any value. They now refuse it, whatever
+  its value, at every supported `specVersion`:
+  `$.approvals[i].attestation: reserved member, absent in v0 (spec §7)`.
+  `addApproval` / `ChangesetApproval.Add` never emitted it, so documents they built are
+  unaffected. Migration: a human-readable note belongs in `comment`.
+- Both SDKs accept `specVersion` 0.5.0.
+
+### Added
+- .NET: the package now carries XML documentation for every public member.
+
 ## [TS 0.5.1] — 2026-09-23
 
 > Published as `@vivariumjs/changeset@0.5.1` (npm), tag `ts-v0.5.1`.
