@@ -25,6 +25,8 @@ jobs:
           node-version: "24"
       # zero RUNTIME dependencies — devDependencies exist only for the dist build
       - run: npm ci
+      - name: Type-check tests and tools
+        run: npm run typecheck
       - name: Unit + conformance tests
         run: npm test
       - name: Type-check + dist build
