@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Version>0.6.0</Version>
     <Description>Reference .NET SDK for the vivarium-changeset spec: JCS canonicalization, fingerprinting, validation, unified diff, and authoring. No apply logic — the changeset is a contract, not an executor.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -22,6 +22,9 @@ public class ChangesetError : Exception
     /// at the first thing they cannot read — while validation reports everything it found.</summary>
     public IReadOnlyList<ValidationError> Errors { get; }
 
+    /// <summary>Create a refusal whose message is the subject followed by one line per error.</summary>
+    /// <param name="subject">What was refused — one of the <see cref="ChangesetErrorSubject"/> strings.</param>
+    /// <param name="errors">The located reasons, in the order found.</param>
     public ChangesetError(string subject, IReadOnlyList<ValidationError> errors)
         : base($"{subject}:\n" + string.Join("\n", errors.Select(Render)))
     {
@@ -50,10 +53,16 @@ public class ChangesetError : Exception
 /// <summary>The subject strings, fixed so both SDKs and the cross-SDK fixtures agree on them.</summary>
 public static class ChangesetErrorSubject
 {
+    /// <summary>A whole document failed structural validation (spec §8).</summary>
     public const string Validation = "changeset failed validation";
+    /// <summary>A <c>verified-diff@0</c> diff is outside its dialect (spec §5.2.2).</summary>
     public const string Dialect = "outside the verified-diff dialect";
+    /// <summary>A unified diff could not be read or applied.</summary>
     public const string UnifiedDiff = "outside the unified-diff dialect";
+    /// <summary>A value cannot be canonicalized under RFC 8785 (JCS).</summary>
     public const string Canonicalization = "cannot canonicalize";
+    /// <summary>A document fingerprint cannot be read, e.g. an unknown prefix (spec §6).</summary>
     public const string Fingerprint = "cannot read fingerprint";
+    /// <summary>A document cannot be approved (spec §7).</summary>
     public const string Approval = "cannot approve";
 }

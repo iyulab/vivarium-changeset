@@ -12,8 +12,15 @@ namespace Vivarium.Changeset;
 /// </summary>
 public static class ChangesetFingerprint
 {
+    /// <summary>The only fingerprint prefix this SDK reads or writes.</summary>
     public const string Prefix = "sha256:";
 
+    /// <summary>
+    /// Compute a document's fingerprint (spec §6). Any existing <c>fingerprint</c> and
+    /// <c>approvals</c> are ignored, so the result is the same before and after stamping or approving.
+    /// </summary>
+    /// <param name="document">The changeset document. It is not modified.</param>
+    /// <returns><c>sha256:</c> followed by the lowercase hex digest.</returns>
     public static string Of(JsonObject document)
     {
         var content = (JsonObject)document.DeepClone();
@@ -24,6 +31,10 @@ public static class ChangesetFingerprint
         return Prefix + Convert.ToHexStringLower(SHA256.HashData(bytes));
     }
 
+    /// <summary>Compute a document's fingerprint (spec §6) from a parsed JSON element.</summary>
+    /// <param name="document">The changeset document; must be a JSON object.</param>
+    /// <returns><c>sha256:</c> followed by the lowercase hex digest.</returns>
+    /// <exception cref="ArgumentException"><paramref name="document"/> is not a JSON object.</exception>
     public static string Of(JsonElement document) =>
         Of(JsonObject.Create(document) ?? throw new ArgumentException("document must be a JSON object", nameof(document)));
 

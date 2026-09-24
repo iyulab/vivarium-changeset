@@ -16,6 +16,10 @@ namespace Vivarium.Changeset;
 /// </summary>
 public static class JsonCanonicalizer
 {
+    /// <summary>Serialize a JSON value in its RFC 8785 canonical form.</summary>
+    /// <param name="value">The value to canonicalize.</param>
+    /// <returns>The canonical JSON text.</returns>
+    /// <exception cref="ChangesetError">The value cannot be canonicalized (e.g. NaN or Infinity).</exception>
     public static string Canonicalize(JsonElement value)
     {
         var sb = new StringBuilder();
@@ -23,6 +27,11 @@ public static class JsonCanonicalizer
         return sb.ToString();
     }
 
+    /// <summary>Parse a JSON text and return its RFC 8785 canonical form.</summary>
+    /// <param name="json">The JSON text to canonicalize.</param>
+    /// <returns>The canonical JSON text.</returns>
+    /// <exception cref="JsonException"><paramref name="json"/> is not valid JSON.</exception>
+    /// <exception cref="ChangesetError">The value cannot be canonicalized.</exception>
     public static string Canonicalize(string json)
     {
         using var doc = JsonDocument.Parse(json);

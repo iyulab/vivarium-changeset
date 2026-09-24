@@ -22,7 +22,11 @@ public static class ChangesetApproval
     /// to emit a document that does not validate. Which approvals an applier trusts, and
     /// where they are kept, stay implementation-defined (spec §7).</para>
     /// </remarks>
+    /// <param name="document">A finalized (fingerprinted) changeset document. It is not modified.</param>
+    /// <param name="approvedBy">Who approved — an opaque identifier recorded as-is.</param>
     /// <param name="approvedAt">An RFC 3339 <c>date-time</c>, e.g. <c>DateTimeOffset.UtcNow.ToString("o")</c>.</param>
+    /// <param name="comment">Optional reviewer comment; omitted from the record when <see langword="null"/>.</param>
+    /// <returns>A new document equal to <paramref name="document"/> plus the appended approval record.</returns>
     /// <exception cref="ChangesetError">The document is not finalized, or changed after it was.</exception>
     /// <exception cref="ChangesetValidationException">The approved document would not validate.</exception>
     public static JsonObject Add(JsonObject document, string approvedBy, string approvedAt, string? comment = null)

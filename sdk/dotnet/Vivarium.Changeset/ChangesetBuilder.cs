@@ -2,6 +2,10 @@ using System.Text.Json.Nodes;
 
 namespace Vivarium.Changeset;
 
+/// <summary>One <c>provenance.baseState</c> entry (spec §4): a piece of the world the changeset was authored against.</summary>
+/// <param name="Kind">One of <see cref="ChangesetValidator.BaseStateKinds"/>; <c>data</c> requires specVersion 0.3.0 or later.</param>
+/// <param name="Ref">Non-empty name of the referenced state (adapter-defined for <c>schema</c> and <c>data</c>).</param>
+/// <param name="Fingerprint">The state's <c>sha256:</c>-prefixed fingerprint.</param>
 public sealed record BaseStateEntry(string Kind, string Ref, string Fingerprint);
 
 /// <summary>
@@ -36,7 +40,16 @@ public sealed class ChangesetBuilder
             _draft["specVersion"] = required;
     }
 
+    /// <summary>
+    /// Start a draft with empty facets and the lowest supported specVersion. Passing a
+    /// <c>data</c> base-state entry raises the specVersion to 0.3.0 (spec §4).
+    /// </summary>
+    /// <param name="intent">One human-readable sentence of what the changeset accomplishes (spec §3).</param>
+    /// <param name="producedBy">Opaque identifier of the producer — agent, tool, or human (spec §4).</param>
     /// <param name="createdAt">Caller supplies the clock — the SDK stays deterministic.</param>
+    /// <param name="id">Optional producer-assigned document id; omitted when <see langword="null"/>.</param>
+    /// <param name="baseState">The states the changeset was authored against; empty only for greenfield creation (spec §4).</param>
+    /// <param name="editContext">Optional selection/screen context the change was made from, stored as-is (spec §4).</param>
     public ChangesetBuilder(
         string intent,
         string producedBy,
@@ -80,6 +93,12 @@ public sealed class ChangesetBuilder
 
     private JsonArray FacetArray(string name) => (JsonArray)((JsonObject)_draft["patches"]!)[name]!;
 
+    /// <summary>
+    /// Append a logical schema operation (spec §5.1). The object is copied as given —
+    /// its vocabulary and members are checked by <see cref="Finalize"/>, not here.
+    /// </summary>
+    /// <param name="op">The operation object, including its <c>op</c> and <c>explanation</c> members.</param>
+    /// <returns>This builder, for chaining.</returns>
     public ChangesetBuilder AddSchemaOp(JsonObject op)
     {
         FacetArray("schema").Add(op.DeepClone());
@@ -128,6 +147,14 @@ public sealed class ChangesetBuilder
         return this;
     }
 
+    /// <summary>
+    /// Append a data patch (spec §5.3): one reviewable unit of run-once operations.
+    /// The operations are copied as given and checked by <see cref="Finalize"/>, not here.
+    /// </summary>
+    /// <param name="id">Patch id, unique within the document; consumers use it for run-once bookkeeping.</param>
+    /// <param name="explanation">What the patch does and why — carried once per patch, not per operation.</param>
+    /// <param name="operations">The <c>insert</c> / <c>update</c> / <c>delete</c> operation objects, in order.</param>
+    /// <returns>This builder, for chaining.</returns>
     public ChangesetBuilder AddDataPatch(string id, string explanation, IEnumerable<JsonObject> operations)
     {
         FacetArray("data").Add(new JsonObject

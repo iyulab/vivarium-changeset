@@ -44,6 +44,14 @@ public static partial class UnifiedDiff
         return ops;
     }
 
+    /// <summary>
+    /// Create the unified diff from <paramref name="baseContent"/> to <paramref name="next"/>:
+    /// <c>@@</c> hunks only, no file headers, each line newline-terminated.
+    /// </summary>
+    /// <param name="baseContent">The original content.</param>
+    /// <param name="next">The changed content.</param>
+    /// <param name="context">Unchanged lines kept around each change; changes separated by at most twice this many share a hunk.</param>
+    /// <returns>The diff, or an empty string when the contents are identical.</returns>
     public static string Create(string baseContent, string next, int context = 3)
     {
         var ops = Script(ToLines(baseContent), ToLines(next));

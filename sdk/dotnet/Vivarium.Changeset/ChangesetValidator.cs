@@ -3,8 +3,14 @@ using System.Text.Json.Nodes;
 
 namespace Vivarium.Changeset;
 
+/// <summary>One located failure: where it is and what is wrong.</summary>
+/// <param name="Path">JSONPath-style location, e.g. <c>$.patches.ui[0].diff</c>; empty means the subject as a whole.</param>
+/// <param name="Message">Human-readable reason.</param>
 public sealed record ValidationError(string Path, string Message);
 
+/// <summary>The outcome of layer-1 validation (spec §8).</summary>
+/// <param name="Valid"><see langword="true"/> when the document is structurally valid.</param>
+/// <param name="Errors">Every failure found; empty when <paramref name="Valid"/> is <see langword="true"/>.</param>
 public sealed record ValidationResult(bool Valid, IReadOnlyList<ValidationError> Errors);
 
 /// <summary>
@@ -46,6 +52,12 @@ public static class ChangesetValidator
         ["delete"] = ["op", "entity", "where"],
     };
 
+    /// <summary>
+    /// Parse and validate a JSON text. Unparseable input is reported as an error at
+    /// <c>$</c>, not thrown.
+    /// </summary>
+    /// <param name="json">The changeset document as JSON text.</param>
+    /// <returns>The validation outcome, listing every failure found.</returns>
     public static ValidationResult Validate(string json)
     {
         JsonNode? node;
@@ -57,6 +69,13 @@ public static class ChangesetValidator
         return Validate(node);
     }
 
+    /// <summary>
+    /// Validate a parsed document against layer 1 (spec §8): structure, closed vocabularies,
+    /// diff consistency, and the embedded fingerprint if present. Reports every failure
+    /// found rather than stopping at the first.
+    /// </summary>
+    /// <param name="document">The parsed document; anything other than a JSON object is invalid.</param>
+    /// <returns>The validation outcome, listing every failure found.</returns>
     public static ValidationResult Validate(JsonNode? document)
     {
         var errors = new List<ValidationError>();
