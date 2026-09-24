@@ -19,8 +19,8 @@ jobs:
       run:
         working-directory: sdk/typescript
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       # zero RUNTIME dependencies — devDependencies exist only for the dist build
@@ -42,8 +42,8 @@ jobs:
       run:
         working-directory: sdk/dotnet
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - name: Unit + conformance tests
@@ -56,11 +56,11 @@ jobs:
   readme-consumer-smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
       - name: TypeScript README examples as a fresh npm consumer
@@ -75,8 +75,8 @@ jobs:
   engines-floor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       - name: The pinned floor still matches engines.node
@@ -93,7 +93,7 @@ jobs:
           npm ci
           npm run build
           npm pack --pack-destination "$RUNNER_TEMP"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
       - name: A fresh consumer builds a changeset on Node 20
